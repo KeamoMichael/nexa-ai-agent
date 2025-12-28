@@ -3,9 +3,17 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import puppeteer from 'puppeteer';
 import cors from 'cors';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 app.use(cors());
+
+// Serve static files from the Vite build output
+app.use(express.static(join(__dirname, '../dist')));
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -34,9 +42,9 @@ const startStreaming = () => {
     if (!page) return;
     try {
       // Capture screenshot as base64
-      const b64 = await page.screenshot({ 
-        encoding: 'base64', 
-        type: 'jpeg', 
+      const b64 = await page.screenshot({
+        encoding: 'base64',
+        type: 'jpeg',
         quality: 50 // Lower quality for speed
       });
       io.emit('browser-frame', `data:image/jpeg;base64,${b64}`);
@@ -54,28 +62,28 @@ io.on('connection', (socket) => {
     if (!browser) {
       console.log('Launching browser...');
       try {
-          // Attempt to launch bundled Chromium with crash-prevention flags
-          browser = await puppeteer.launch({
-            headless: true,
-            // executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', // Commented out to use bundled
-            args: [
-                '--no-sandbox', 
-                '--disable-setuid-sandbox',
-                '--disable-gpu',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote', 
-                '--single-process', 
-                '--disable-audio-output',
-                '--window-size=1280,800'
-            ],
-            dumpio: true, 
-            timeout: 60000 
-          });
+        // Attempt to launch bundled Chromium with crash-prevention flags
+        browser = await puppeteer.launch({
+          headless: true,
+          // executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', // Commented out to use bundled
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-gpu',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-audio-output',
+            '--window-size=1280,800'
+          ],
+          dumpio: true,
+          timeout: 60000
+        });
       } catch (e) {
-          console.error('Failed to launch browser:', e);
-          return;
+        console.error('Failed to launch browser:', e);
+        return;
       }
 
       page = await browser.newPage();
@@ -88,38 +96,38 @@ io.on('connection', (socket) => {
   socket.on('navigate', async (url) => {
     if (!page) return;
     console.log(`Navigating to: ${url}`);
-    
+
     try {
-        await page.goto(url, { waitUntil: 'domcontentloaded' });
-        socket.emit('navigation-complete'); // Notify client that page is ready
-        // Start streaming updates
-        startStreaming();
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      socket.emit('navigation-complete'); // Notify client that page is ready
+      // Start streaming updates
+      startStreaming();
     } catch (e) {
-        console.error('Navigation failed', e);
+      console.error('Navigation failed', e);
     }
   });
 
   socket.on('get-content', async () => {
-      if (!page) {
-          socket.emit('page-content', '');
-          return;
-      }
-      try {
-          const content = await page.evaluate(() => document.body.innerText);
-          // Limit content size to avoid token limits in LLM
-          socket.emit('page-content', content.substring(0, 10000));
-      } catch (e) {
-          console.error('Failed to get content', e);
-          socket.emit('page-content', '');
-      }
+    if (!page) {
+      socket.emit('page-content', '');
+      return;
+    }
+    try {
+      const content = await page.evaluate(() => document.body.innerText);
+      // Limit content size to avoid token limits in LLM
+      socket.emit('page-content', content.substring(0, 10000));
+    } catch (e) {
+      console.error('Failed to get content', e);
+      socket.emit('page-content', '');
+    }
   });
 
   socket.on('scroll-down', async () => {
-     if (page) {
-         await page.evaluate(() => {
-             window.scrollBy({ top: 300, behavior: 'smooth' });
-         });
-     }
+    if (page) {
+      await page.evaluate(() => {
+        window.scrollBy({ top: 300, behavior: 'smooth' });
+      });
+    }
   });
 
   socket.on('stop-browser', async () => {
@@ -137,7 +145,12 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = 3001;
-httpServer.listen(PORT, () => {
-  console.log(`Browser Server running on http://localhost:${PORT}`);
+// Catch-all route to serve index.html for SPA routing
+app.get('*', (req, res) => {
+  res.sendFile(join(__dirname, '../dist/index.html'));
+});
+
+const PORT = process.env.PORT || 3001;
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(`Browser Server running on http://0.0.0.0:${PORT}`);
 });
