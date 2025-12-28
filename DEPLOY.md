@@ -34,9 +34,12 @@ Click **"Advanced"** and add these environment variables:
 | Key | Value | Notes |
 |-----|-------|-------|
 | `NODE_ENV` | `production` | Required |
-| `GEMINI_API_KEY` | `your-api-key-here` | Your Google Gemini API key |
+| `VITE_GEMINI_API_KEY` | `your-gemini-api-key` | Your Google Gemini API key |
+| `VITE_TAVILY_API_KEY` | `your-tavily-api-key` | Tavily search API (free tier: 1000 credits/month) |
 
-> ⚠️ **Important**: Replace `your-api-key-here` with your actual Gemini API key
+> ⚠️ **Important**: 
+> - Replace with your actual API keys
+> - Get Tavily API key from https://tavily.com (free tier available)
 
 ### 4. Deploy
 
@@ -56,10 +59,10 @@ https://manus-ai-clone.onrender.com
 
 ## Important Notes
 
-### Puppeteer on Render
-- Puppeteer may have issues on free tier due to memory constraints
-- If browser automation fails, consider upgrading to a paid plan
-- The server already includes necessary Puppeteer flags for Render compatibility
+### Web Search via Tavily
+- The app uses Tavily API for web search instead of local browser automation
+- Free tier includes 1000 search credits per month (1 basic search = 1 credit)
+- No browser resource overhead on the server
 
 ### Cold Starts
 - Free tier services spin down after 15 minutes of inactivity

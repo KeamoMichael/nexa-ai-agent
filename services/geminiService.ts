@@ -1,12 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PlanStep } from "../types";
-import { io } from "socket.io-client";
+import { tavily } from "@tavily/core";
 
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-// Use dynamic socket URL: production uses same origin, dev uses localhost:3001
-const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin;
-const socket = io(SOCKET_URL, { autoConnect: false });
+// Initialize Tavily client for web search
+const tvly = tavily({ apiKey: import.meta.env.VITE_TAVILY_API_KEY });
 
 // 1. Determine Intent: Chat vs Task
 export const analyzeIntent = async (prompt: string): Promise<'chat' | 'task'> => {
@@ -76,7 +75,7 @@ export const generateStepLogs = async (stepDescription: string, context: string)
       model: 'gemini-3-flash-preview',
       contents: `For the agentic task step: "${stepDescription}", generate 2 or 3 short, realistic "system log" status updates that an AI would report while executing this.
             Context: ${context}
-            Examples: "Searching Google for X...", "Reading documentation...", "Parsing dataset...", "Running python script..."
+            Examples: "Searching Tavily for X...", "Reading documentation...", "Parsing dataset...", "Running python script..."
             Keep them under 8 words.
             Return ONLY a JSON array of strings.`,
       config: {
@@ -95,58 +94,59 @@ export const generateStepLogs = async (stepDescription: string, context: string)
   }
 };
 
-// 5. Execute Step (Simulation + Real Browser Control)
+// 5. Execute Step with Tavily Search
 export const executeStep = async (step: string, context: string): Promise<string> => {
-  let scrapedContent = "";
+  let searchResults = "";
   const lowerStep = step.toLowerCase();
 
-  // --- Browser Control Logic ---
-  if (lowerStep.includes('search') || lowerStep.includes('browse') || lowerStep.includes('google') || lowerStep.includes('visit')) {
-    if (!socket.connected) socket.connect();
-    socket.emit('start-browser');
+  // --- Tavily Search Logic ---
+  if (lowerStep.includes('search') || lowerStep.includes('browse') || lowerStep.includes('google') ||
+    lowerStep.includes('research') || lowerStep.includes('find') || lowerStep.includes('look up')) {
 
-    let url = 'https://www.google.com';
-    if (lowerStep.includes('search')) {
-      const query = step.replace(/search/i, '').replace(/google/i, '').replace(/for/i, '').trim();
-      url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-    } else if (lowerStep.includes('visit')) {
-      const parts = step.split('visit');
-      if (parts[1]) url = `https://${parts[1].trim()}`;
-    }
+    // Extract search query from step
+    const query = step
+      .replace(/search|browse|google|research|find|look up|for|the|web|internet/gi, '')
+      .trim();
 
-    // Perform Navigation and Scrape
-    try {
-      // Wrap socket events in promises to "await" them
-      await new Promise<void>((resolve) => {
-        socket.emit('navigate', url);
-        const onComplete = () => {
-          socket.off('navigation-complete', onComplete);
-          resolve();
-        };
-        socket.on('navigation-complete', onComplete);
-        // Fallback timeout
-        setTimeout(resolve, 8000);
-      });
+    if (query && import.meta.env.VITE_TAVILY_API_KEY) {
+      try {
+        console.log(`[Tavily] Searching for: "${query}"`);
 
-      // Get Text Content
-      scrapedContent = await new Promise<string>((resolve) => {
-        socket.emit('get-content');
-        const onContent = (text: string) => {
-          socket.off('page-content', onContent);
-          resolve(text);
-        };
-        socket.on('page-content', onContent);
-        setTimeout(() => resolve(""), 5000);
-      });
-    } catch (e) {
-      console.error("Browser interaction failed", e);
+        const response = await tvly.search(query, {
+          searchDepth: "basic",
+          maxResults: 5,
+          includeAnswer: true,  // Get AI-generated answer summary
+          includeRawContent: false
+        });
+
+        // Format search results with citations
+        if (response.results && response.results.length > 0) {
+          searchResults = response.results
+            .map((r: any, i: number) =>
+              `[${i + 1}] ${r.title}\n${r.content}\nSource: ${r.url}`
+            )
+            .join('\n\n');
+
+          // Prepend the AI-generated answer if available
+          if (response.answer) {
+            searchResults = `Summary: ${response.answer}\n\n--- Detailed Results ---\n${searchResults}`;
+          }
+
+          console.log(`[Tavily] Found ${response.results.length} results`);
+        }
+      } catch (e) {
+        console.error('Tavily search failed:', e);
+        searchResults = "Search temporarily unavailable. Using internal knowledge.";
+      }
+    } else {
+      console.log('[Tavily] No API key or empty query, using internal knowledge');
     }
   }
   // -----------------------------
 
   try {
-    const promptContext = scrapedContent
-      ? `I have successfully browsed the web. Here is the ACTUAL text content I found on the page:\n\n${scrapedContent.substring(0, 5000)}\n\n`
+    const promptContext = searchResults
+      ? `I have successfully searched the web using Tavily. Here is the ACTUAL information I found:\n\n${searchResults.substring(0, 8000)}\n\n`
       : `I am executing this step based on my internal knowledge.`;
 
     const response = await ai.models.generateContent({
@@ -157,8 +157,8 @@ export const executeStep = async (step: string, context: string): Promise<string
       
       ${promptContext}
       
-      Based on the above (especially the website content if provided), provide a concise, factual summary (1-2 sentences) of what you found or achieved. 
-      If you found specific data, quote it. Do not halllucinate.`,
+      Based on the above (especially the search results if provided), provide a concise, factual summary (2-3 sentences) of what you found or achieved. 
+      If you found specific data, quote it. Do not hallucinate. Cite sources when available.`,
     });
     return response.text || "Step completed.";
   } catch (error) {

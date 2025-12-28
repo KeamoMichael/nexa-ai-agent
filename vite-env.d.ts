@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
     readonly VITE_GEMINI_API_KEY: string
+    readonly VITE_TAVILY_API_KEY: string
     readonly DEV: boolean
     // Add other env variables as needed
 }
