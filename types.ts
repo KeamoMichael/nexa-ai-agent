@@ -1,0 +1,50 @@
+export interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  type?: 'text' | 'plan' | 'file';
+  plan?: Plan; // Added this to store plan state within the message history
+  planId?: string;
+  fileData?: FileArtifact;
+  modelTag?: string;
+}
+
+export interface FileArtifact {
+  name: string;
+  type: string;
+  size: string;
+  url?: string;
+}
+
+export interface PlanStep {
+  id: number;
+  description: string;
+  status: 'pending' | 'active' | 'completed';
+  logs: string[]; // e.g. "Searching...", "Browsing..."
+}
+
+export interface Plan {
+  id: string;
+  title: string;
+  steps: PlanStep[];
+  isComplete: boolean;
+}
+
+export enum AgentState {
+  IDLE = 'IDLE',
+  PLANNING = 'PLANNING',
+  EXECUTING = 'EXECUTING',
+  COMPLETED = 'COMPLETED',
+}
+
+export interface Model {
+  id: string;
+  name: string;
+  description: string;
+  tag?: string;
+}
+
+export const MODELS: Model[] = [
+  { id: 'lite', name: 'Manus 1.6 Fast', description: 'A lightweight agent for everyday tasks.', tag: 'Fast' },
+  { id: 'max', name: 'Manus 1.6 Pro', description: 'High-performance agent designed for complex tasks.', tag: 'Pro' },
+];

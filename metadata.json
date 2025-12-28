@@ -1,0 +1,7 @@
+{
+  "name": "Manus AI Clone",
+  "description": "A high-fidelity minimalist agentic interface featuring a dynamic planner, credit system, and streaming AI responses using Gemini.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
