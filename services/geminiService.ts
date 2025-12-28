@@ -1,11 +1,36 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PlanStep } from "../types";
-import { tavily } from "@tavily/core";
 
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
 
-// Initialize Tavily client for web search
-const tvly = tavily({ apiKey: import.meta.env.VITE_TAVILY_API_KEY });
+// Tavily Search via REST API (browser-compatible)
+const searchTavily = async (query: string) => {
+  const apiKey = import.meta.env.VITE_TAVILY_API_KEY;
+  if (!apiKey) {
+    throw new Error('Tavily API key not configured');
+  }
+
+  const response = await fetch('https://api.tavily.com/search', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      api_key: apiKey,
+      query: query,
+      search_depth: 'basic',
+      max_results: 5,
+      include_answer: true,
+      include_raw_content: false
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Tavily API error: ${response.statusText}`);
+  }
+
+  return await response.json();
+};
 
 // 1. Determine Intent: Chat vs Task
 export const analyzeIntent = async (prompt: string): Promise<'chat' | 'task'> => {
@@ -112,12 +137,7 @@ export const executeStep = async (step: string, context: string): Promise<string
       try {
         console.log(`[Tavily] Searching for: "${query}"`);
 
-        const response = await tvly.search(query, {
-          searchDepth: "basic",
-          maxResults: 5,
-          includeAnswer: true,  // Get AI-generated answer summary
-          includeRawContent: false
-        });
+        const response = await searchTavily(query);
 
         // Format search results with citations
         if (response.results && response.results.length > 0) {
