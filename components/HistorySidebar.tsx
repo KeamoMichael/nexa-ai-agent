@@ -16,6 +16,7 @@ interface HistorySidebarProps {
     onShareChat: (id: string) => void;
     onNewChat: () => void;
     onOpenSettings: () => void;
+    username?: string;
 }
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({

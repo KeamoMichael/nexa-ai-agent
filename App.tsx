@@ -434,6 +434,7 @@ export default function App() {
         onShareChat={shareChat}
         onNewChat={createNewChat}
         onOpenSettings={() => setSettingsOpen(true)}
+        username="Manus User"
       />
 
       <SettingsModal
