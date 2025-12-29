@@ -411,10 +411,24 @@ export default function App() {
       };
       fileType = typeMap[extension] || 'Code';
     } else {
-      // General task - create summary report
-      finalContent = await generateFinalReport(userText, updatedSteps.map(s => s.description));
-      fileName = `Result_${userText.substring(0, 10).replace(/\s/g, '_')}.md`;
-      fileType = 'Markdown';
+      // General task - show summary inline (NO file creation)
+      const summary = await generateFinalReport(userText, updatedSteps.map(s => s.description));
+
+      if (isStoppedRef.current) { handleTermination(); return; }
+
+      setCurrentPlan(prev => prev ? { ...prev, isComplete: true } : null);
+
+      const summaryMsg: Message = {
+        id: (Date.now() + 3).toString(),
+        role: 'assistant',
+        content: summary,
+        type: 'text',
+        modelTag: currentModel.tag
+      };
+
+      setMessages(prev => [...prev, summaryMsg]);
+      setAgentState(AgentState.IDLE);
+      return; // Exit early - no file message needed
     }
 
     if (isStoppedRef.current) { handleTermination(); return; }

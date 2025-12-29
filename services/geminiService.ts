@@ -111,14 +111,29 @@ const searchTavily = async (query: string) => {
 export const analyzeIntent = async (prompt: string): Promise<'chat' | 'task'> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash', // Updated to latest flash model
-      contents: `Classify the following user prompt.
-      "chat": Simple greetings, questions about the AI's identity, casual conversation, or simple one-shot questions that don't require research or multiple steps.
-      "task": Requests requiring research, planning, creating documents, coding, analyzing data, or executing multiple steps.
-      
-      User Prompt: "${prompt}"
-      
-      Return ONLY the string "chat" or "task".`,
+      model: 'gemini-2.0-flash',
+      contents: `Classify the following user prompt into EXACTLY one category.
+
+"chat": Use this for:
+- Greetings and casual conversation
+- Questions about the AI's identity
+- Simple Q&A that can be answered directly
+- Creative writing requests (stories, poems, essays, scripts)
+- Explanations, opinions, or advice
+- ANY request where the user wants a text response displayed in the conversation
+
+"task": Use this ONLY for requests that EXPLICITLY require:
+- Creating/saving a specific FILE (e.g., "create hello.py", "make a file called...")
+- Web browsing or research that needs citations/sources
+- Running code or terminal commands
+- Multi-step computer operations
+- Downloading or packaging files
+
+IMPORTANT: If the user asks you to "write" something but doesn't mention saving it as a file, that is "chat" NOT "task".
+
+User Prompt: "${prompt}"
+
+Return ONLY the word "chat" or "task".`,
     });
     const text = response.text?.toLowerCase().trim();
     return text?.includes('task') ? 'task' : 'chat';
