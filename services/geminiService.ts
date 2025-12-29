@@ -219,38 +219,21 @@ export const executeStep = async (step: string, context: string): Promise<string
         }
       } catch (e) {
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.0-flash',
-          contents: `You are an autonomous agent executing a step in a task. 
-      Current Step: ${step}
-      Context from previous steps: ${context}
-      
-      ${promptContext}
-      
-      Based on the above (especially the search results if provided), provide a concise, factual summary (2-3 sentences) of what you found or achieved. 
-      If you found specific data, quote it. Do not hallucinate. Cite sources when available.`,
-        });
-        return response.text || "Step completed.";
-      } catch (error) {
-        return "Completed step.";
-      }
-    };
-
-    // 6. Final Report
-    export const generateFinalReport = async (originalPrompt: string, stepSummaries: string[]): Promise<string> => {
-      try {
-        const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: `Generate a comprehensive final response for the user based on the executed steps.
+        // 6. Final Report
+        export const generateFinalReport = async (originalPrompt: string, stepSummaries: string[]): Promise<string> => {
+          try {
+            const response = await ai.models.generateContent({
+              model: 'gemini-3-flash-preview',
+              contents: `Generate a comprehensive final response for the user based on the executed steps.
       Original Request: "${originalPrompt}"
       
       Execution Log:
       ${stepSummaries.map((s, i) => `${i + 1}. ${s}`).join('\n')}
       
       Format with clear headings and bullet points. Keep it professional and concise.`,
-        });
-        return response.text || "Task completed.";
-      } catch (error) {
-        return "Here is the result of your request based on the steps taken.";
-      }
-    };
+            });
+            return response.text || "Task completed.";
+          } catch (error) {
+            return "Here is the result of your request based on the steps taken.";
+          }
+        };
