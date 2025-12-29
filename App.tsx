@@ -420,6 +420,7 @@ export default function App() {
     <div className="flex h-screen bg-[#F9F9F9] text-gray-900 font-sans overflow-hidden">
       <HistorySidebar
         isOpen={historyOpen}
+        onToggle={() => setHistoryOpen(!historyOpen)}
         onClose={() => setHistoryOpen(false)}
         chats={chats}
         activeChat={activeChatId}

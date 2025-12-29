@@ -32,23 +32,19 @@ export const TopBar: React.FC<TopBarProps> = ({
   return (
     <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-[#F9F9F9]/90 backdrop-blur-sm">
       <div className="flex items-center gap-3">
-        {/* History Toggle - Desktop: always hamburger, Mobile: back arrow when open */}
+        {/* History Toggle - Mobile Only */}
         <button
           onClick={onToggleHistory}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-100 rounded-lg transition-colors md:hidden"
           title="Toggle history"
         >
           {/* Mobile: show back arrow when sidebar is open, hamburger when closed */}
-          <div className="md:hidden">
+          <div>
             {historyOpen ? (
               <ChevronLeft size={20} className="text-gray-600" />
             ) : (
               <Menu size={20} className="text-gray-600" />
             )}
-          </div>
-          {/* Desktop: always show hamburger */}
-          <div className="hidden md:block">
-            <Menu size={20} className="text-gray-600" />
           </div>
         </button>
 

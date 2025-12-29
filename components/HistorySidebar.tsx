@@ -5,8 +5,9 @@ import { ChatHistory } from '../types';
 import manusLogo from '../assets/manus logo.png';
 
 interface HistorySidebarProps {
-    isOpen: boolean; // Controls Expanded (true) vs Mini (false) on Desktop. Controls Visible (true) vs Hidden (false) on Mobile.
-    onClose: () => void;
+    isOpen: boolean;
+    onToggle: () => void; // Used for the Sidebar's internal toggle button
+    onClose: () => void;  // Used for Mobile Overlay click
     chats: ChatHistory[];
     activeChat: string;
     onSelectChat: (id: string) => void;
@@ -18,6 +19,7 @@ interface HistorySidebarProps {
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     isOpen,
+    onToggle,
     onClose,
     chats,
     activeChat,
@@ -83,20 +85,22 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             <div className="flex flex-col h-full w-full">
                 {/* Header */}
                 <div className={`flex items-center h-14 min-h-[56px] px-3 border-b border-transparent ${showFull ? 'justify-between' : 'justify-center'}`}>
-                    <div className="flex items-center gap-3 overflow-hidden">
-                        <img src={manusLogo} alt="Manus" className="w-6 h-6 shrink-0 rounded-sm" />
-                        {showFull && <span className="text-base font-sans font-semibold text-gray-900 truncate">manus</span>}
-                    </div>
 
+                    {/* Expanded: Logo */}
                     {showFull && (
-                        <button
-                            onClick={onClose}
-                            className="p-1.5 hover:bg-gray-200 rounded-md text-gray-500 transition-colors"
-                            title="Collapse sidebar"
-                        >
-                            <PanelLeft size={18} />
-                        </button>
+                        <div className="flex items-center overflow-hidden">
+                            <img src={manusLogo} alt="Manus" className="h-6 w-auto object-contain max-w-[120px]" />
+                        </div>
                     )}
+
+                    {/* Toggle Button - Visible in BOTH states (Centered in Mini, Right in Expanded) */}
+                    <button
+                        onClick={onToggle}
+                        className={`p-1.5 hover:bg-gray-200 rounded-md text-gray-500 transition-colors shrink-0 ${showFull ? '' : 'mx-auto'}`}
+                        title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+                    >
+                        <PanelLeft size={18} />
+                    </button>
                 </div>
 
                 {/* Primary Actions */}
@@ -243,7 +247,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 </div>
             </motion.div>
 
-            {/* Mobile Sidebar - Fixed Overlay (Full Width or 260px) */}
+            {/* Mobile Sidebar - Fixed Overlay */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
