@@ -432,11 +432,6 @@ export default function App() {
 
       {/* Main Content - Pushes right when sidebar opens */}
       <motion.div
-        initial={false}
-        animate={{
-          marginLeft: historyOpen ? '260px' : '0px',
-          transition: { type: 'spring', damping: 30, stiffness: 300 }
-        }}
         className="flex-1 flex flex-col min-w-0 relative"
       >
 
