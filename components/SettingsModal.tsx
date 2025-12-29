@@ -90,7 +90,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         <div className="space-y-1">
                                             <label className="text-xs font-medium text-gray-500 uppercase">Email</label>
                                             <input
-                                                value="keamo@manus.ai"
+                                                value="keamo@nexa.ai"
                                                 disabled
                                                 className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed"
                                             />

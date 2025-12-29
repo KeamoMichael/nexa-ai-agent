@@ -325,7 +325,7 @@ export const PlannerWidget: React.FC<PlannerWidgetProps> = ({ plan }) => {
                     <X size={20} className="text-gray-600" />
                 </button>
                 <div className="flex flex-col items-center">
-                    <h2 className="font-semibold text-gray-900">Manus's computer</h2>
+                    <h2 className="font-semibold text-gray-900">Nexa's computer</h2>
                 </div>
                 <div className="w-10 flex justify-end">
                     <div className="p-2 bg-gray-100 rounded-lg">
@@ -357,7 +357,7 @@ export const PlannerWidget: React.FC<PlannerWidgetProps> = ({ plan }) => {
                         </div>
                         <div className="flex-1 min-w-0 pt-0.5">
                             <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-                                {isPlanComplete ? "Task completed" : `Manus is using ${toolName}`}
+                                {isPlanComplete ? "Task completed" : `Nexa is using ${toolName}`}
                             </h3>
                             <p className="text-sm text-gray-500 mt-0.5 leading-relaxed break-words">
                                 {activeStep.description}
@@ -464,7 +464,7 @@ export const PlannerWidget: React.FC<PlannerWidgetProps> = ({ plan }) => {
                 {viewMode === 'desktop' && renderDesktopOverlay()}
             </AnimatePresence>
 
-            <div className={`absolute bottom-32 sm:bottom-28 left-0 right-0 flex justify-center z-50 pointer-events-none px-4 transition-all duration-300 ${viewMode === 'desktop' ? 'opacity-0 translate-y-10' : 'opacity-100 translate-y-0'}`}>
+            <div className={`absolute bottom-32 left-0 right-0 flex justify-center z-50 pointer-events-none px-4 transition-all duration-300 ${viewMode === 'desktop' ? 'opacity-0 translate-y-10' : 'opacity-100 translate-y-0'}`}>
                 <div className="pointer-events-auto w-full max-w-2xl origin-bottom perspective-1000">
                     <AnimatePresence>
                         {viewMode === 'expanded' ? (
@@ -491,7 +491,7 @@ export const PlannerWidget: React.FC<PlannerWidgetProps> = ({ plan }) => {
                                         onClick={() => setViewMode('collapsed')}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <h3 className="font-semibold text-sm text-gray-900 leading-tight">Manus's computer</h3>
+                                            <h3 className="font-semibold text-sm text-gray-900 leading-tight">Nexa's computer</h3>
                                             <span className="text-xs font-medium text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{activeStepNum} / {plan.steps.length}</span>
                                         </div>
                                         <p className="text-xs text-gray-500 truncate mt-0.5">
@@ -549,9 +549,9 @@ export const PlannerWidget: React.FC<PlannerWidgetProps> = ({ plan }) => {
                                 </div>
 
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-semibold text-sm text-gray-900">Manus's computer</h3>
+                                    <h3 className="font-semibold text-sm text-gray-900">Nexa's computer</h3>
                                     <p className="text-xs text-gray-500 truncate mt-0.5">
-                                        {isPlanComplete ? "Task completed" : `Manus is using ${toolName}`}
+                                        {isPlanComplete ? "Task completed" : `Nexa is using ${toolName}`}
                                     </p>
                                 </div>
 

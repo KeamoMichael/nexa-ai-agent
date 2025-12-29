@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import manusLogo from '../assets/Nexa AI agent logo PNG.png';
+import nexaLogo from '../assets/Nexa AI agent logo PNG.png';
 
 interface ThinkingProps {
   modelTag: string;
@@ -12,7 +12,7 @@ export const Thinking: React.FC<ThinkingProps> = ({ modelTag }) => {
       <div className="w-full">
         {/* Header */}
         <div className="flex items-center gap-1 mb-2">
-          <img src={manusLogo} alt="Manus" className="h-6 w-auto object-contain" />
+          <img src={nexaLogo} alt="Nexa" className="h-6 w-auto object-contain" />
           <span className="text-[11px] bg-gray-200 px-2 py-0.5 rounded-md text-gray-500 font-medium">
             {modelTag}
           </span>

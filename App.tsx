@@ -14,7 +14,7 @@ import { HistorySidebar } from './components/HistorySidebar';
 import { SettingsModal } from './components/SettingsModal';
 import { RenameChatModal } from './components/RenameChatModal';
 import { ChatHistory } from './types';
-import manusLogo from './assets/Nexa AI agent logo PNG.png';
+import nexaLogo from './assets/Nexa AI agent logo PNG.png';
 import { Thinking } from './components/Thinking';
 
 import { AVAILABLE_MODELS } from './services/geminiService';
@@ -40,15 +40,15 @@ export default function App() {
   const [interactionCount, setInteractionCount] = useState(0);
 
   // Settings State
-  const [username, setUsername] = useState(() => localStorage.getItem('manus_username') || 'Manus User');
-  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('manus_dark_mode') === 'true');
+  const [username, setUsername] = useState(() => localStorage.getItem('nexa_username') || 'Nexa User');
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('nexa_dark_mode') === 'true');
 
   useEffect(() => {
-    localStorage.setItem('manus_username', username);
+    localStorage.setItem('nexa_username', username);
   }, [username]);
 
   useEffect(() => {
-    localStorage.setItem('manus_dark_mode', String(isDarkMode));
+    localStorage.setItem('nexa_dark_mode', String(isDarkMode));
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -79,7 +79,7 @@ export default function App() {
 
   // Initialize chat history from localStorage
   useEffect(() => {
-    const savedChats = localStorage.getItem('manus_chat_history');
+    const savedChats = localStorage.getItem('nexa_chat_history');
     if (savedChats) {
       try {
         const parsed: ChatHistory[] = JSON.parse(savedChats);
@@ -104,7 +104,7 @@ export default function App() {
   // Save chats to localStorage whenever they change
   useEffect(() => {
     if (chats.length > 0) {
-      localStorage.setItem('manus_chat_history', JSON.stringify(chats));
+      localStorage.setItem('nexa_chat_history', JSON.stringify(chats));
     }
   }, [chats]);
 
@@ -400,7 +400,7 @@ export default function App() {
     if (requestedFile) {
       // User requested a specific file - generate it!
       const extension = requestedFile.split('.').pop()!;
-      finalContent = await generateFinalReport(userText, updatedSteps.map(s => s.description));
+      finalContent = await generateFinalReport(userText, updatedSteps.map(s => s.description), executionContext);
       fileName = requestedFile;
 
       // Map extension to file type
@@ -420,7 +420,7 @@ export default function App() {
       fileType = typeMap[extension] || 'Code';
     } else {
       // General task - show summary inline (NO file creation)
-      const summary = await generateFinalReport(userText, updatedSteps.map(s => s.description));
+      const summary = await generateFinalReport(userText, updatedSteps.map(s => s.description), executionContext);
 
       if (isStoppedRef.current) { handleTermination(); return; }
 
@@ -540,7 +540,7 @@ export default function App() {
                   ) : (
                     <div className="w-full">
                       <div className="flex items-center gap-1 mb-2">
-                        <img src={manusLogo} alt="Manus" className="h-6 w-auto object-contain" />
+                        <img src={nexaLogo} alt="Nexa" className="h-6 w-auto object-contain" />
                         <span className="text-[11px] bg-gray-200 px-2 py-0.5 rounded-md text-gray-500 font-medium">
                           {msg.modelTag}
                         </span>
@@ -664,7 +664,7 @@ export default function App() {
                     handleSend();
                   }
                 }}
-                placeholder={messages.length > 0 ? "Message Manus..." : "What's on your mind?"}
+                placeholder={messages.length > 0 ? "Message Nexa..." : "What's on your mind?"}
                 disabled={agentState !== AgentState.IDLE || isLoginRequired}
                 className="w-full min-h-[24px] max-h-[300px] bg-transparent border-none outline-none text-[15px] px-3 pt-2 pb-0 text-gray-900 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-500 resize-none scrollbar-hide overflow-y-auto leading-relaxed"
               />

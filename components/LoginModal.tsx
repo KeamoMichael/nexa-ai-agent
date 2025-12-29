@@ -31,7 +31,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onLogin }) => {
         </div>
 
         <h2 className="text-2xl font-sans font-semibold text-gray-900 mb-2">
-          Unlock Manus
+          Unlock Nexa
         </h2>
         <p className="text-gray-500 mb-8 leading-relaxed">
           You've reached the limit for guest access. Log in to continue your task and access the full planner capabilities.

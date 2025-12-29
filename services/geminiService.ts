@@ -374,7 +374,7 @@ const classifyStepTool = async (step: string): Promise<'browser' | 'search' | 'k
 };
 
 // 7. Final Report Generation
-export const generateFinalReport = async (originalPrompt: string, stepSummaries: string[]): Promise<string> => {
+export const generateFinalReport = async (originalPrompt: string, stepSummaries: string[], executionContext?: string): Promise<string> => {
   try {
     // Check if user requested a specific file (must match App.tsx regex!)
     const fileMatch = originalPrompt.match(/(?:create|modify|edit|change|update|deliverable|named|file|save|package|the file|to).*?([a-zA-Z0-9_-]+\.(py|js|html|css|json|txt|md|tsx|ts|jsx|zip))/i);
@@ -382,6 +382,7 @@ export const generateFinalReport = async (originalPrompt: string, stepSummaries:
 
     console.log('[Final Report] Prompt:', originalPrompt);
     console.log('[Final Report] Detected file:', requestedFile);
+    console.log('[Final Report] Has context:', !!executionContext);
 
     if (requestedFile && requestedFile.endsWith('.zip')) {
       // Generate ZIP archive with multiple files!
@@ -465,15 +466,23 @@ Just the code, nothing else.`
 
       return response.text || '# Code generation failed';
     } else {
-      // Generate a task summary (can use markdown here)
+      // Generate a comprehensive task summary with actual findings
       const response = await ai.models.generateContent({
         model: 'gemini-2.0-flash',
-        contents: `Summarize this completed task in 2-3 sentences.
-        
-User asked: ${originalPrompt}
-Steps completed: ${stepSummaries.join(', ')}
+        contents: `Generate a detailed response for the user based on the research performed.
 
-Be concise.`
+User's original request: "${originalPrompt}"
+
+Research findings and data gathered:
+${executionContext || 'No additional context available.'}
+
+Instructions:
+- Present the actual findings in a well-formatted response
+- Use bullet points for lists
+- Bold important names or terms
+- If there are specific companies, people, or data mentioned in the findings, include them
+- Make the response informative and complete
+- Do NOT just say "the task was completed" - show the actual results`
       });
 
       return response.text || 'Task completed successfully.';

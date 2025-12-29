@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MessageSquare, MoreVertical, Edit2, Trash2, Share2, Plus, Search, PanelLeft, Edit3, ChevronDown, ChevronRight, ChevronLeft, User } from 'lucide-react';
 import { ChatHistory } from '../types';
-import manusLogo from '../assets/Nexa AI agent logo PNG.png';
+import nexaLogo from '../assets/Nexa AI agent logo PNG.png';
 import { SearchModal } from './SearchModal';
 
 interface HistorySidebarProps {
@@ -106,7 +106,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         <>
                             {/* Center: Logo */}
                             <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center">
-                                <img src={manusLogo} alt="Manus" className="h-6 w-auto object-contain max-w-[100px]" />
+                                <img src={nexaLogo} alt="Nexa" className="h-6 w-auto object-contain max-w-[100px]" />
                             </div>
 
                             {/* Right: Settings User Icon */}
@@ -124,7 +124,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         <>
                             {showFull && (
                                 <div className="flex items-center overflow-hidden">
-                                    <img src={manusLogo} alt="Manus" className="h-6 w-auto object-contain max-w-[120px]" />
+                                    <img src={nexaLogo} alt="Nexa" className="h-6 w-auto object-contain max-w-[120px]" />
                                 </div>
                             )}
 
