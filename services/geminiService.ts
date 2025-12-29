@@ -1,7 +1,48 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PlanStep } from "../types";
+import { io, Socket } from "socket.io-client";
 
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+
+// Socket.IO connection for E2B browser control
+const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin;
+let browserSocket: Socket | null = null;
+let browserReady = false;
+
+// Initialize browser connection
+const initBrowser = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if (browserSocket && browserReady) {
+      resolve();
+      return;
+    }
+
+    browserSocket = io(SOCKET_URL);
+
+    browserSocket.on('connect', () => {
+      console.log('[Agent] Browser socket connected');
+      browserSocket!.emit('start-browser');
+    });
+
+    browserSocket.on('browser-ready', () => {
+      console.log('[Agent] Browser ready for use');
+      browserReady = true;
+      resolve();
+    });
+
+    browserSocket.on('browser-error', (error: { message: string }) => {
+      console.error('[Agent] Browser error:', error);
+      reject(new Error(error.message));
+    });
+
+    // Timeout after 30 seconds
+    setTimeout(() => {
+      if (!browserReady) {
+        reject(new Error('Browser initialization timeout'));
+      }
+    }, 30000);
+  });
+};
 
 // Tavily Search via REST API (browser-compatible)
 const searchTavily = async (query: string) => {
@@ -119,27 +160,53 @@ export const generateStepLogs = async (stepDescription: string, context: string)
   }
 };
 
-// 5. Execute Step with Tavily Search
+// 5. Execute Step with Browser Control and Tavily Search
 export const executeStep = async (step: string, context: string): Promise<string> => {
   let searchResults = "";
   const lowerStep = step.toLowerCase();
 
-  // --- Tavily Search Logic ---
-  if (lowerStep.includes('search') || lowerStep.includes('browse') || lowerStep.includes('google') ||
+  // --- Check if this is a browsing task (needs E2B browser) ---
+  if (lowerStep.includes('browse') || lowerStep.includes('visit') || lowerStep.includes('open') ||
+    lowerStep.includes('navigate') || lowerStep.includes('go to')) {
+
+    const urlMatch = step.match(/(https?:\/\/[^\s]+|[a-z0-9-]+\.[a-z]+)/i);
+    const url = urlMatch ? (urlMatch[0].startsWith('http') ? urlMatch[0] : `https://${urlMatch[0]}`) : 'https://google.com';
+
+    try {
+      console.log(`[Agent] Browsing task detected, initializing browser...`);
+      await initBrowser();
+
+      // Navigate to URL
+      browserSocket!.emit('navigate', url);
+
+      // Wait for navigation to complete
+      await new Promise<void>((resolve) => {
+        browserSocket!.once('navigation-complete', () => resolve());
+        setTimeout(() => resolve(), 5000); // Timeout fallback
+      });
+
+      searchResults = `Navigated to ${url} using E2B cloud desktop browser. Page is now visible in the desktop preview.`;
+      console.log(`[Agent] Successfully browsed to ${url}`);
+    } catch (e) {
+      console.error('[Agent] Browser task failed:', e);
+      searchResults = `Browser unavailable: ${e instanceof Error ? e.message : 'Unknown error'}. Falling back to internal knowledge.`;
+    }
+  }
+
+  // --- Or use Tavily for quick fact-finding searches ---
+  else if (lowerStep.includes('search') || lowerStep.includes('google') ||
     lowerStep.includes('research') || lowerStep.includes('find') || lowerStep.includes('look up')) {
 
-    // Extract search query from step
     const query = step
       .replace(/search|browse|google|research|find|look up|for|the|web|internet/gi, '')
       .trim();
 
     if (query && import.meta.env.VITE_TAVILY_API_KEY) {
       try {
-        console.log(`[Tavily] Searching for: "${query}"`);
+        console.log(`[Agent Tavily] Searching for: "${query}"`);
 
         const response = await searchTavily(query);
 
-        // Format search results with citations
         if (response.results && response.results.length > 0) {
           searchResults = response.results
             .map((r: any, i: number) =>
@@ -147,7 +214,6 @@ export const executeStep = async (step: string, context: string): Promise<string
             )
             .join('\n\n');
 
-          // Prepend the AI-generated answer if available
           if (response.answer) {
             searchResults = `Summary: ${response.answer}\n\n--- Detailed Results ---\n${searchResults}`;
           }
@@ -159,7 +225,7 @@ export const executeStep = async (step: string, context: string): Promise<string
         searchResults = "Search temporarily unavailable. Using internal knowledge.";
       }
     } else {
-      console.log('[Tavily] No API key or empty query, using internal knowledge');
+      console.log('[Agent] No Tavily API key or empty query, using internal knowledge');
     }
   }
   // -----------------------------
