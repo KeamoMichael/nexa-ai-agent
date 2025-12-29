@@ -39,6 +39,23 @@ export default function App() {
   const [isLoginRequired, setIsLoginRequired] = useState(false);
   const [interactionCount, setInteractionCount] = useState(0);
 
+  // Settings State
+  const [username, setUsername] = useState(() => localStorage.getItem('manus_username') || 'Manus User');
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('manus_dark_mode') === 'true');
+
+  useEffect(() => {
+    localStorage.setItem('manus_username', username);
+  }, [username]);
+
+  useEffect(() => {
+    localStorage.setItem('manus_dark_mode', String(isDarkMode));
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isStoppedRef = useRef(false);
@@ -436,12 +453,16 @@ export default function App() {
         onShareChat={shareChat}
         onNewChat={createNewChat}
         onOpenSettings={() => setSettingsOpen(true)}
-        username="Manus User"
+        username={username}
       />
 
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setSettingsOpen(false)}
+        username={username}
+        setUsername={setUsername}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
       />
 
       <RenameChatModal
@@ -612,9 +633,9 @@ export default function App() {
         <PlannerWidget plan={currentPlan} />
 
         {/* Bottom Input Bar - Minimal Multi-line Redesign with Ultra Tightened Spacing */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#F9F9F9] via-[#F9F9F9] to-transparent pt-10 z-40">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#F9F9F9] via-[#F9F9F9] to-transparent dark:from-gray-900 dark:via-gray-900 pt-10 z-40">
           <div className="max-w-2xl mx-auto">
-            <div className={`flex flex-col bg-white p-1 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-100 transition-all ${isLoginRequired ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+            <div className={`flex flex-col bg-white dark:bg-gray-800 p-1 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-100 dark:border-gray-700 transition-all ${isLoginRequired ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
 
               {/* Upper Text Area - Dynamically scales up to max-height, minimal vertical gaps */}
               <textarea
@@ -629,7 +650,7 @@ export default function App() {
                 }}
                 placeholder={messages.length > 0 ? "Message Manus..." : "What's on your mind?"}
                 disabled={agentState !== AgentState.IDLE || isLoginRequired}
-                className="w-full min-h-[24px] max-h-[300px] bg-transparent border-none outline-none text-[15px] px-3 pt-2 pb-0 text-gray-900 placeholder-gray-300 resize-none scrollbar-hide overflow-y-auto leading-relaxed"
+                className="w-full min-h-[24px] max-h-[300px] bg-transparent border-none outline-none text-[15px] px-3 pt-2 pb-0 text-gray-900 dark:text-gray-100 placeholder-gray-300 dark:placeholder-gray-500 resize-none scrollbar-hide overflow-y-auto leading-relaxed"
               />
 
               {/* Lower Icon Row - Zero margin-top for absolute minimum gap */}
@@ -637,7 +658,7 @@ export default function App() {
                 {/* Left side: Upload */}
                 <button
                   disabled={isLoginRequired}
-                  className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+                  className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors"
                 >
                   <Plus size={18} />
                 </button>
@@ -646,7 +667,7 @@ export default function App() {
                 <div className="flex items-center gap-1">
                   <button
                     disabled={isLoginRequired}
-                    className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+                    className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors"
                   >
                     <Mic size={16} />
                   </button>
@@ -663,8 +684,8 @@ export default function App() {
                       onClick={handleSend}
                       disabled={!inputValue.trim() || isLoginRequired}
                       className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${inputValue.trim()
-                        ? 'bg-black text-white hover:opacity-90 shadow-sm'
-                        : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                        ? 'bg-black text-white hover:opacity-90 shadow-sm dark:bg-white dark:text-black'
+                        : 'bg-gray-100 text-gray-300 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500'
                         }`}
                     >
                       <ArrowUp size={16} />

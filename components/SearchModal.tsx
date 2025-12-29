@@ -78,14 +78,14 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="fixed inset-0 m-auto w-full max-w-[600px] h-fit max-h-[80vh] bg-white rounded-2xl shadow-2xl z-[100] flex flex-col overflow-hidden border border-gray-100"
+                        className="fixed inset-0 m-auto w-full max-w-[600px] h-fit max-h-[80vh] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl z-[100] flex flex-col overflow-hidden border border-gray-100 dark:border-gray-700"
                         style={{
                             top: '20%',
                             bottom: 'auto'
                         }}
                     >
                         {/* Header / Search Input */}
-                        <div className="flex items-center px-4 py-3 border-b border-gray-100 gap-3">
+                        <div className="flex items-center px-4 py-3 border-b border-gray-100 dark:border-gray-700 gap-3">
                             <Search size={20} className="text-gray-400" />
                             <input
                                 autoFocus
@@ -93,26 +93,26 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                                 placeholder="Search tasks..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="flex-1 text-base outline-none text-gray-800 placeholder:text-gray-400 bg-transparent h-10"
+                                className="flex-1 text-base outline-none text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-transparent h-10"
                             />
                             <button
                                 onClick={onClose}
-                                className="p-1 hover:bg-gray-100 rounded-md text-gray-400 hover:text-gray-600 transition-colors"
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
 
                         {/* Quick Action: New Task */}
-                        <div className="p-2 border-b border-gray-50 bg-gray-50/50">
+                        <div className="p-2 border-b border-gray-50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-900/50">
                             <button
                                 onClick={() => {
                                     onNewChat();
                                     onClose();
                                 }}
-                                className="flex items-center gap-3 px-3 py-2 w-full hover:bg-white hover:shadow-sm rounded-lg transition-all text-sm font-medium text-gray-700 group border border-transparent hover:border-gray-200"
+                                className="flex items-center gap-3 px-3 py-2 w-full hover:bg-white dark:hover:bg-gray-700 hover:shadow-sm rounded-lg transition-all text-sm font-medium text-gray-700 dark:text-gray-200 group border border-transparent hover:border-gray-200 dark:hover:border-gray-600"
                             >
-                                <div className="w-8 h-8 rounded-md bg-white border border-gray-200 flex items-center justify-center text-gray-500 group-hover:text-black group-hover:border-gray-300 transition-colors shadow-sm">
+                                <div className="w-8 h-8 rounded-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 group-hover:text-black dark:group-hover:text-white group-hover:border-gray-300 dark:group-hover:border-gray-500 transition-colors shadow-sm">
                                     <Plus size={16} />
                                 </div>
                                 New task
@@ -144,13 +144,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                                                         onSelectChat(chat.id);
                                                         onClose();
                                                     }}
-                                                    className="flex items-start gap-3 w-full px-3 py-2.5 hover:bg-gray-50 rounded-lg group transition-colors text-left"
+                                                    className="flex items-start gap-3 w-full px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg group transition-colors text-left"
                                                 >
-                                                    <div className="mt-0.5 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 shrink-0 group-hover:bg-white group-hover:shadow-sm transition-all border border-transparent group-hover:border-gray-200">
+                                                    <div className="mt-0.5 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 shrink-0 group-hover:bg-white dark:group-hover:bg-gray-600 group-hover:shadow-sm transition-all border border-transparent group-hover:border-gray-200 dark:group-hover:border-gray-500">
                                                         <MessageSquare size={14} />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <h4 className="text-sm font-medium text-gray-900 truncate pr-4">
+                                                        <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate pr-4">
                                                             {chat.title}
                                                         </h4>
                                                         <p className="text-xs text-gray-500 truncate mt-0.5">
