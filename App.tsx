@@ -20,7 +20,7 @@ export default function App() {
   const [currentModel, setCurrentModel] = useState<Model>(MODELS[0]);
   const [isCreditSheetOpen, setIsCreditSheetOpen] = useState(false);
   const [credits, setCredits] = useState(1067);
-  
+
   // Auth & Session State
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Start as guest
   const [isLoginRequired, setIsLoginRequired] = useState(false);
@@ -50,10 +50,10 @@ export default function App() {
   // Sync currentPlan updates
   useEffect(() => {
     if (currentPlan) {
-      setMessages(prevMessages => 
-        prevMessages.map(msg => 
-          msg.type === 'plan' && msg.id === currentPlan.id 
-            ? { ...msg, plan: currentPlan } 
+      setMessages(prevMessages =>
+        prevMessages.map(msg =>
+          msg.type === 'plan' && msg.id === currentPlan.id
+            ? { ...msg, plan: currentPlan }
             : msg
         )
       );
@@ -104,15 +104,15 @@ export default function App() {
 
     // Check Guest Limits & Permissions
     if (!isLoggedIn) {
-        // Check for private data access intents
-        const privateKeywords = ['gmail', 'email', 'calendar', 'drive', 'my file', 'my doc', 'spreadsheet', 'login', 'account'];
-        const requiresAuth = privateKeywords.some(kw => userText.toLowerCase().includes(kw));
+      // Check for private data access intents
+      const privateKeywords = ['gmail', 'email', 'calendar', 'drive', 'my file', 'my doc', 'spreadsheet', 'login', 'account'];
+      const requiresAuth = privateKeywords.some(kw => userText.toLowerCase().includes(kw));
 
-        // Trigger if auth required or limit reached (3 interactions)
-        if (requiresAuth || interactionCount >= 3) {
-            setIsLoginRequired(true);
-            return;
-        }
+      // Trigger if auth required or limit reached (3 interactions)
+      if (requiresAuth || interactionCount >= 3) {
+        setIsLoginRequired(true);
+        return;
+      }
     }
 
     const userMsg: Message = {
@@ -124,58 +124,60 @@ export default function App() {
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
     setAgentState(AgentState.PLANNING);
-    setCredits(prev => prev - 10); 
+    setCredits(prev => prev - 10);
     setInteractionCount(prev => prev + 1);
-    
+
     isStoppedRef.current = false;
 
     // --- STEP 1: Determine Intent ---
     if (isStoppedRef.current) { handleTermination(); return; }
     const intent = await analyzeIntent(userText);
-    
+
     // --- CASE A: Simple Chat ---
     if (intent === 'chat') {
-        if (isStoppedRef.current) { handleTermination(); return; }
-        const responseText = await generateChatResponse(userText);
-        
-        if (isStoppedRef.current) { handleTermination(); return; }
+      if (isStoppedRef.current) { handleTermination(); return; }
+      const responseText = await generateChatResponse(userText);
 
-        const assistantMsg: Message = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: responseText,
-            type: 'text',
-            modelTag: currentModel.tag
-        };
-        
-        setMessages(prev => [...prev, assistantMsg]);
-        setAgentState(AgentState.IDLE);
-        return;
+      if (isStoppedRef.current) { handleTermination(); return; }
+
+      const assistantMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: responseText,
+        type: 'text',
+        modelTag: currentModel.tag
+      };
+
+      setMessages(prev => [...prev, assistantMsg]);
+      setAgentState(AgentState.IDLE);
+      return;
     }
 
     // --- CASE B: Complex Task (Agentic Mode) ---
 
-    // 1. Initial Response
+    // 1. Generate intelligent initial response (not hardcoded!)
     if (isStoppedRef.current) { handleTermination(); return; }
+    const initialResponseText = await generateChatResponse(`Acknowledge the user's request: "${userText}". Be brief and natural, 1-2 sentences max.`);
+
     const initialResponseMsg: Message = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
-      content: `I'll get started on that right away.`,
+      content: initialResponseText,
       type: 'text',
-      modelTag: currentModel.tag 
+      modelTag: currentModel.tag
     };
     setMessages(prev => [...prev, initialResponseMsg]);
 
     // 2. Generate Plan
     if (isStoppedRef.current) { handleTermination(); return; }
     const rawSteps = await generatePlan(userText);
-    
+
     if (isStoppedRef.current) { handleTermination(); return; }
 
     const planId = (Date.now() + 2).toString();
     const newPlan: Plan = {
       id: planId,
-      title: userText, 
+      title: userText,
       isComplete: false,
       steps: rawSteps.map((desc, i) => ({
         id: i,
@@ -184,11 +186,11 @@ export default function App() {
         logs: []
       }))
     };
-    
+
     const planMsg: Message = {
-      id: planId, 
+      id: planId,
       role: 'assistant',
-      content: '', 
+      content: '',
       type: 'plan',
       plan: newPlan,
       modelTag: currentModel.tag
@@ -202,37 +204,39 @@ export default function App() {
     const updatedSteps = [...newPlan.steps];
 
     for (let i = 0; i < updatedSteps.length; i++) {
+      if (isStoppedRef.current) { handleTermination(); return; }
+
+      updatedSteps[i].status = 'active';
+      setCurrentPlan({ ...newPlan, steps: [...updatedSteps] });
+
+      // Execute the step FIRST (actual work happens here)
+      if (isStoppedRef.current) { handleTermination(); return; }
+      const result = await executeStep(updatedSteps[i].description, executionContext);
+      executionContext += `\nStep ${i + 1}: ${result}`;
+
+      // THEN show logs after execution (so they match what actually happened)
+      const dynamicLogs = await generateStepLogs(updatedSteps[i].description, executionContext);
+
+      for (const log of dynamicLogs) {
         if (isStoppedRef.current) { handleTermination(); return; }
-
-        updatedSteps[i].status = 'active';
+        updatedSteps[i].logs.push(log);
         setCurrentPlan({ ...newPlan, steps: [...updatedSteps] });
-        
-        const dynamicLogs = await generateStepLogs(updatedSteps[i].description, executionContext);
-        
-        for (const log of dynamicLogs) {
-             if (isStoppedRef.current) { handleTermination(); return; }
-             updatedSteps[i].logs.push(log);
-             setCurrentPlan({ ...newPlan, steps: [...updatedSteps] });
-             await new Promise(r => setTimeout(r, 800 + Math.random() * 500));
-        }
+        await new Promise(r => setTimeout(r, 300)); // Short delay for visual feedback
+      }
 
-        if (isStoppedRef.current) { handleTermination(); return; }
-
-        const result = await executeStep(updatedSteps[i].description, executionContext);
-        executionContext += `\nStep ${i+1}: ${result}`;
-        
-        updatedSteps[i].status = 'completed';
-        setCurrentPlan({ ...newPlan, steps: [...updatedSteps] });
+      updatedSteps[i].status = 'completed';
+      setCurrentPlan({ ...newPlan, steps: [...updatedSteps] });
+      await new Promise(r => setTimeout(r, 500)); // Brief pause before next step
     }
 
     // 4. Finalize
     if (isStoppedRef.current) { handleTermination(); return; }
     const finalReport = await generateFinalReport(userText, updatedSteps.map(s => s.description));
-    
+
     if (isStoppedRef.current) { handleTermination(); return; }
 
     setCurrentPlan(prev => prev ? { ...prev, isComplete: true } : null);
-    
+
     const fileMsg: Message = {
       id: (Date.now() + 3).toString(),
       role: 'assistant',
@@ -252,24 +256,24 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen bg-[#F9F9F9] text-gray-900 font-sans relative overflow-hidden">
-      <TopBar 
-        currentModel={currentModel} 
-        setCurrentModel={setCurrentModel} 
-        credits={credits} 
-        openCredits={() => setIsCreditSheetOpen(true)} 
+      <TopBar
+        currentModel={currentModel}
+        setCurrentModel={setCurrentModel}
+        credits={credits}
+        openCredits={() => setIsCreditSheetOpen(true)}
       />
-      
+
       <CreditSheet isOpen={isCreditSheetOpen} onClose={() => setIsCreditSheetOpen(false)} credits={credits} />
       <LoginModal isOpen={isLoginRequired} onLogin={handleLogin} />
 
       {/* Main Content Area */}
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto pt-20 pb-40 px-4 scroll-smooth"
       >
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center -mt-20">
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-5xl md:text-6xl font-serif text-center text-gray-800 leading-tight tracking-tight"
@@ -280,67 +284,67 @@ export default function App() {
         ) : (
           <div className="max-w-2xl mx-auto space-y-6">
             {messages.map((msg, idx) => (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                key={msg.id} 
+                key={msg.id}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                 {msg.role === 'user' ? (
-                   <div className="bg-gray-100 px-5 py-3 rounded-2xl rounded-tr-sm text-gray-800 max-w-[85%] text-[15px] leading-relaxed">
-                     {msg.content}
-                   </div>
-                 ) : (
-                   <div className="w-full">
-                      <div className="flex items-center gap-1 mb-2">
-                         <img src={manusLogo} alt="Manus" className="h-6 w-auto object-contain" />
-                         <span className="text-[11px] bg-gray-200 px-2 py-0.5 rounded-md text-gray-500 font-medium">
-                            {msg.modelTag || currentModel.tag}
-                         </span>
+                {msg.role === 'user' ? (
+                  <div className="bg-gray-100 px-5 py-3 rounded-2xl rounded-tr-sm text-gray-800 max-w-[85%] text-[15px] leading-relaxed">
+                    {msg.content}
+                  </div>
+                ) : (
+                  <div className="w-full">
+                    <div className="flex items-center gap-1 mb-2">
+                      <img src={manusLogo} alt="Manus" className="h-6 w-auto object-contain" />
+                      <span className="text-[11px] bg-gray-200 px-2 py-0.5 rounded-md text-gray-500 font-medium">
+                        {msg.modelTag || currentModel.tag}
+                      </span>
+                    </div>
+
+                    {msg.type === 'text' && (
+                      <div className="mb-4">
+                        <MessageRenderer content={msg.content} />
                       </div>
-                      
-                      {msg.type === 'text' && (
-                        <div className="mb-4">
-                           <MessageRenderer content={msg.content} />
-                        </div>
-                      )}
+                    )}
 
-                      {msg.type === 'plan' && msg.plan && (
-                        <InlinePlanWidget plan={msg.plan} />
-                      )}
+                    {msg.type === 'plan' && msg.plan && (
+                      <InlinePlanWidget plan={msg.plan} />
+                    )}
 
-                      {msg.type === 'file' && msg.fileData && (
-                        <div className="mt-4">
-                            <p className="text-gray-800 text-[15px] leading-relaxed mb-3">{msg.content.split('\n')[0]}...</p>
-                            
-                            <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group shadow-sm">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                                        <FileText className="text-white" size={20} />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-semibold text-sm text-gray-900 group-hover:text-blue-600 transition-colors">{msg.fileData.name}</h4>
-                                        <p className="text-xs text-gray-500">{msg.fileData.type} • {msg.fileData.size}</p>
-                                    </div>
-                                </div>
-                                <div className="p-2 text-gray-400 group-hover:text-blue-600 transition-colors">
-                                    <Download size={20} />
-                                </div>
+                    {msg.type === 'file' && msg.fileData && (
+                      <div className="mt-4">
+                        <p className="text-gray-800 text-[15px] leading-relaxed mb-3">{msg.content.split('\n')[0]}...</p>
+
+                        <div className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group shadow-sm">
+                          <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                              <FileText className="text-white" size={20} />
                             </div>
-
-                            <div className="mt-4 flex items-center gap-2">
-                                <Check size={14} className="text-green-600" />
-                                <span className="text-sm text-green-600 font-medium">Task completed</span>
+                            <div>
+                              <h4 className="font-semibold text-sm text-gray-900 group-hover:text-blue-600 transition-colors">{msg.fileData.name}</h4>
+                              <p className="text-xs text-gray-500">{msg.fileData.type} • {msg.fileData.size}</p>
                             </div>
+                          </div>
+                          <div className="p-2 text-gray-400 group-hover:text-blue-600 transition-colors">
+                            <Download size={20} />
+                          </div>
                         </div>
-                      )}
-                   </div>
-                 )}
+
+                        <div className="mt-4 flex items-center gap-2">
+                          <Check size={14} className="text-green-600" />
+                          <span className="text-sm text-green-600 font-medium">Task completed</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </motion.div>
             ))}
 
             {agentState === AgentState.PLANNING && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
@@ -348,7 +352,7 @@ export default function App() {
                 <Thinking modelTag={currentModel.tag} />
               </motion.div>
             )}
-            
+
             <div className="h-12" />
           </div>
         )}
@@ -359,66 +363,65 @@ export default function App() {
       {/* Bottom Input Bar - Minimal Multi-line Redesign with Ultra Tightened Spacing */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#F9F9F9] via-[#F9F9F9] to-transparent pt-10 z-40">
         <div className="max-w-2xl mx-auto">
-             <div className={`flex flex-col bg-white p-1 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-100 transition-all ${isLoginRequired ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
-                
-                {/* Upper Text Area - Dynamically scales up to max-height, minimal vertical gaps */}
-                <textarea 
-                    ref={textareaRef}
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSend();
-                        }
-                    }}
-                    placeholder={messages.length > 0 ? "Message Manus..." : "What's on your mind?"}
-                    disabled={agentState !== AgentState.IDLE || isLoginRequired}
-                    className="w-full min-h-[24px] max-h-[300px] bg-transparent border-none outline-none text-[15px] px-3 pt-2 pb-0 text-gray-900 placeholder-gray-300 resize-none scrollbar-hide overflow-y-auto leading-relaxed"
-                />
+          <div className={`flex flex-col bg-white p-1 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-100 transition-all ${isLoginRequired ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
 
-                {/* Lower Icon Row - Zero margin-top for absolute minimum gap */}
-                <div className="flex items-center justify-between mt-0 px-1 pb-0.5 pt-0.5">
-                    {/* Left side: Upload */}
-                    <button 
-                        disabled={isLoginRequired}
-                        className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
-                    >
-                        <Plus size={18} />
-                    </button>
+            {/* Upper Text Area - Dynamically scales up to max-height, minimal vertical gaps */}
+            <textarea
+              ref={textareaRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={messages.length > 0 ? "Message Manus..." : "What's on your mind?"}
+              disabled={agentState !== AgentState.IDLE || isLoginRequired}
+              className="w-full min-h-[24px] max-h-[300px] bg-transparent border-none outline-none text-[15px] px-3 pt-2 pb-0 text-gray-900 placeholder-gray-300 resize-none scrollbar-hide overflow-y-auto leading-relaxed"
+            />
 
-                    {/* Right side: Mic and Send/Stop */}
-                    <div className="flex items-center gap-1">
-                        <button 
-                            disabled={isLoginRequired}
-                            className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
-                        >
-                            <Mic size={16} />
-                        </button>
+            {/* Lower Icon Row - Zero margin-top for absolute minimum gap */}
+            <div className="flex items-center justify-between mt-0 px-1 pb-0.5 pt-0.5">
+              {/* Left side: Upload */}
+              <button
+                disabled={isLoginRequired}
+                className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+              >
+                <Plus size={18} />
+              </button>
 
-                        {agentState !== AgentState.IDLE ? (
-                            <button 
-                                onClick={handleStop}
-                                className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white hover:opacity-90 transition-opacity"
-                            >
-                                <Square size={12} fill="currentColor" />
-                            </button>
-                        ) : (
-                            <button 
-                                onClick={handleSend}
-                                disabled={!inputValue.trim() || isLoginRequired}
-                                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                                    inputValue.trim() 
-                                    ? 'bg-black text-white hover:opacity-90 shadow-sm' 
-                                    : 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                                }`}
-                            >
-                                <ArrowUp size={16} />
-                            </button>
-                        )}
-                    </div>
-                </div>
-             </div>
+              {/* Right side: Mic and Send/Stop */}
+              <div className="flex items-center gap-1">
+                <button
+                  disabled={isLoginRequired}
+                  className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors"
+                >
+                  <Mic size={16} />
+                </button>
+
+                {agentState !== AgentState.IDLE ? (
+                  <button
+                    onClick={handleStop}
+                    className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white hover:opacity-90 transition-opacity"
+                  >
+                    <Square size={12} fill="currentColor" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSend}
+                    disabled={!inputValue.trim() || isLoginRequired}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${inputValue.trim()
+                      ? 'bg-black text-white hover:opacity-90 shadow-sm'
+                      : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                      }`}
+                  >
+                    <ArrowUp size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
