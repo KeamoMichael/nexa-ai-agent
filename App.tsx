@@ -156,16 +156,16 @@ export default function App() {
     // --- CASE B: Complex Task (Agentic Mode) ---
 
     // Generate initial response (skip for file creation - we'll respond at the end with deliverable)
-    const fileMatch = userText.match(/(?:create|deliverable|named|file|save|package).*?([a-zA-Z0-9_-]+\.(py|js|html|css|json|txt|md|tsx|ts|jsx|zip))/i);
-    const isFileRequest = fileMatch !== null;
+    const initialFileMatch = userText.match(/(?:create|deliverable|named|file|save|package).*?([a-zA-Z0-9_-]+\.(py|js|html|css|json|txt|md|tsx|ts|jsx|zip))/i);
+    const isFileRequest = initialFileMatch !== null;
 
     let initialResponseContent = '';
     if (!isFileRequest) {
       // Only generate detailed response for non-file requests
-      initialResponseContent = await generateDynamicResponse(userText);
+      initialResponseContent = await generateChatResponse(`Acknowledge the user's request: "${userText}". Be brief and natural, 1-2 sentences max.`);
     } else {
       // For file requests, just acknowledge and proceed to execution
-      initialResponseContent = `I'll create ${fileMatch[1]} for you.`;
+      initialResponseContent = `I'll create ${initialFileMatch[1]} for you.`;
     }
 
     setMessages(prev => [...prev, {
