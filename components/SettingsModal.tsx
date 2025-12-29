@@ -7,8 +7,8 @@ interface SettingsModalProps {
     onClose: () => void;
     username: string;
     setUsername: (name: string) => void;
-    isDarkMode: boolean;
-    setIsDarkMode: (isDark: boolean) => void;
+    themeMode: 'light' | 'dark' | 'system';
+    setThemeMode: (mode: 'light' | 'dark' | 'system') => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -16,8 +16,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     onClose,
     username,
     setUsername,
-    isDarkMode,
-    setIsDarkMode
+    themeMode,
+    setThemeMode
 }) => {
     const [activeTab, setActiveTab] = useState<'profile' | 'appearance'>('profile');
 
@@ -41,18 +41,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         initial={{ opacity: 0, scale: 0.95, y: 10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                        className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[80vh]"
+                        className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[80vh]"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                            <h2 className="text-lg font-semibold text-gray-900">Settings</h2>
-                            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                <X size={20} className="text-gray-500" />
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Settings</h2>
+                            <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+                                <X size={20} className="text-gray-500 dark:text-gray-400" />
                             </button>
                         </div>
 
                         {/* Sidebar / Tabs (Center for mobile friendly) */}
-                        <div className="flex items-center justify-center gap-2 px-6 py-2 border-b border-gray-100 overflow-x-auto no-scrollbar">
+                        <div className="flex items-center justify-center gap-2 px-6 py-2 border-b border-gray-100 dark:border-gray-700 overflow-x-auto no-scrollbar">
                             <TabButton
                                 active={activeTab === 'profile'}
                                 onClick={() => setActiveTab('profile')}
@@ -80,19 +80,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                                     <div className="space-y-4">
                                         <div className="space-y-1">
-                                            <label className="text-xs font-medium text-gray-500 uppercase">Display Name</label>
+                                            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Display Name</label>
                                             <input
                                                 value={username}
                                                 onChange={(e) => setUsername(e.target.value)}
-                                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                                             />
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-xs font-medium text-gray-500 uppercase">Email</label>
+                                            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</label>
                                             <input
                                                 value="keamo@nexa.ai"
                                                 disabled
-                                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed"
+                                                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed"
                                             />
                                         </div>
                                     </div>
@@ -102,25 +102,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             {activeTab === 'appearance' && (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-medium text-gray-500 uppercase mb-2 block">Theme</label>
+                                        <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2 block">Theme</label>
                                         <div className="grid grid-cols-3 gap-3">
                                             <ThemeOption
                                                 label="Light"
                                                 icon={<Sun size={24} />}
-                                                active={!isDarkMode}
-                                                onClick={() => setIsDarkMode(false)}
+                                                active={themeMode === 'light'}
+                                                onClick={() => setThemeMode('light')}
                                             />
                                             <ThemeOption
                                                 label="Dark"
                                                 icon={<Moon size={24} />}
-                                                active={isDarkMode}
-                                                onClick={() => setIsDarkMode(true)}
+                                                active={themeMode === 'dark'}
+                                                onClick={() => setThemeMode('dark')}
                                             />
                                             <ThemeOption
                                                 label="System"
                                                 icon={<Monitor size={24} />}
-                                                active={false}
-                                                onClick={() => { }}
+                                                active={themeMode === 'system'}
+                                                onClick={() => setThemeMode('system')}
                                             />
                                         </div>
                                     </div>

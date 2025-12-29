@@ -41,20 +41,41 @@ export default function App() {
 
   // Settings State
   const [username, setUsername] = useState(() => localStorage.getItem('nexa_username') || 'Nexa User');
-  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('nexa_dark_mode') === 'true');
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>(() => {
+    const saved = localStorage.getItem('nexa_theme_mode');
+    if (saved === 'light' || saved === 'dark' || saved === 'system') return saved;
+    return 'system';
+  });
 
   useEffect(() => {
     localStorage.setItem('nexa_username', username);
   }, [username]);
 
+  // Theme effect - handles light/dark/system modes
   useEffect(() => {
-    localStorage.setItem('nexa_dark_mode', String(isDarkMode));
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+    localStorage.setItem('nexa_theme_mode', themeMode);
+
+    const applyTheme = (isDark: boolean) => {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    };
+
+    if (themeMode === 'system') {
+      // Use system preference
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      applyTheme(mediaQuery.matches);
+
+      // Listen for system theme changes
+      const handler = (e: MediaQueryListEvent) => applyTheme(e.matches);
+      mediaQuery.addEventListener('change', handler);
+      return () => mediaQuery.removeEventListener('change', handler);
     } else {
-      document.documentElement.classList.remove('dark');
+      applyTheme(themeMode === 'dark');
     }
-  }, [isDarkMode]);
+  }, [themeMode]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -483,8 +504,8 @@ export default function App() {
         onClose={() => setSettingsOpen(false)}
         username={username}
         setUsername={setUsername}
-        isDarkMode={isDarkMode}
-        setIsDarkMode={setIsDarkMode}
+        themeMode={themeMode}
+        setThemeMode={setThemeMode}
       />
 
       <RenameChatModal
