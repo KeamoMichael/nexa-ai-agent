@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MessageSquare, MoreVertical, Edit2, Trash2, Share2, Plus, Search, PanelLeft, Edit3, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, MessageSquare, MoreVertical, Edit2, Trash2, Share2, Plus, Search, PanelLeft, Edit3, ChevronDown, ChevronRight, ChevronLeft, User } from 'lucide-react';
 import { ChatHistory } from '../types';
 import manusLogo from '../assets/manus logo.png';
 
 interface HistorySidebarProps {
     isOpen: boolean;
-    onToggle: () => void; // Used for the Sidebar's internal toggle button
-    onClose: () => void;  // Used for Mobile Overlay click
+    onToggle: () => void;
+    onClose: () => void;
     chats: ChatHistory[];
     activeChat: string;
     onSelectChat: (id: string) => void;
@@ -15,6 +15,7 @@ interface HistorySidebarProps {
     onDeleteChat: (id: string) => void;
     onShareChat: (id: string) => void;
     onNewChat: () => void;
+    onOpenSettings: () => void;
 }
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
@@ -27,7 +28,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     onRenameChat,
     onDeleteChat,
     onShareChat,
-    onNewChat
+    onNewChat,
+    onOpenSettings
 }) => {
     const [menuOpen, setMenuOpen] = useState<string | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -77,7 +79,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         setRenaming(null);
     };
 
-    // Shared Content for both modes (logic handles visuals)
+    // Sidebar Content Component
     const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => {
         const showFull = mobile || isOpen;
 
@@ -86,21 +88,48 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 {/* Header */}
                 <div className={`flex items-center h-14 min-h-[56px] px-3 border-b border-transparent ${showFull ? 'justify-between' : 'justify-center'}`}>
 
-                    {/* Expanded: Logo */}
-                    {showFull && (
-                        <div className="flex items-center overflow-hidden">
-                            <img src={manusLogo} alt="Manus" className="h-6 w-auto object-contain max-w-[120px]" />
-                        </div>
-                    )}
+                    {/* Mobile Header Layout: Back Arrow (Left), Logo (Center), Settings Right */}
+                    {mobile ? (
+                        <>
+                            {/* Left: Close Sidebar */}
+                            <button
+                                onClick={onClose}
+                                className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
 
-                    {/* Toggle Button - Visible in BOTH states (Centered in Mini, Right in Expanded) */}
-                    <button
-                        onClick={onToggle}
-                        className={`p-1.5 hover:bg-gray-200 rounded-md text-gray-500 transition-colors shrink-0 ${showFull ? '' : 'mx-auto'}`}
-                        title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
-                    >
-                        <PanelLeft size={18} />
-                    </button>
+                            {/* Center: Logo */}
+                            <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center">
+                                <img src={manusLogo} alt="Manus" className="h-6 w-auto object-contain max-w-[100px]" />
+                            </div>
+
+                            {/* Right: Settings User Icon */}
+                            <button
+                                onClick={onOpenSettings}
+                                className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"
+                            >
+                                <User size={20} />
+                            </button>
+                        </>
+                    ) : (
+                        // Desktop Header Layout
+                        <>
+                            {showFull && (
+                                <div className="flex items-center overflow-hidden">
+                                    <img src={manusLogo} alt="Manus" className="h-6 w-auto object-contain max-w-[120px]" />
+                                </div>
+                            )}
+
+                            <button
+                                onClick={onToggle}
+                                className={`p-1.5 hover:bg-gray-200 rounded-md text-gray-500 transition-colors shrink-0 ${showFull ? '' : 'mx-auto'}`}
+                                title={isOpen ? "Collapse sidebar" : "Expand sidebar"}
+                            >
+                                <PanelLeft size={18} />
+                            </button>
+                        </>
+                    )}
                 </div>
 
                 {/* Primary Actions */}
@@ -241,7 +270,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 }}
                 className="hidden md:flex flex-col bg-[#F9F9F9] border-r border-gray-200 overflow-hidden h-full z-20 shrink-0"
             >
-                {/* Fixed width inner container prevents content jumping during resize */}
                 <div className="w-full h-full">
                     <SidebarContent mobile={false} />
                 </div>

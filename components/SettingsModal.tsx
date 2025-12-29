@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, User, Moon, Sun, Monitor, Cpu, Shield, Zap } from 'lucide-react';
+import { X, User, Moon, Sun, Monitor } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SettingsModalProps {
@@ -8,7 +8,7 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
-    const [activeTab, setActiveTab] = useState<'profile' | 'appearance' | 'agent'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'appearance'>('profile');
     const [darkMode, setDarkMode] = useState(false);
     const [username, setUsername] = useState('Keamo');
 
@@ -42,8 +42,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                             </button>
                         </div>
 
-                        {/* Sidebar / Tabs (Horizontal for mobile friendly) */}
-                        <div className="flex items-center gap-2 px-6 py-2 border-b border-gray-100 overflow-x-auto no-scrollbar">
+                        {/* Sidebar / Tabs (Center for mobile friendly) */}
+                        <div className="flex items-center justify-center gap-2 px-6 py-2 border-b border-gray-100 overflow-x-auto no-scrollbar">
                             <TabButton
                                 active={activeTab === 'profile'}
                                 onClick={() => setActiveTab('profile')}
@@ -55,12 +55,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                 onClick={() => setActiveTab('appearance')}
                                 icon={<Moon size={16} />}
                                 label="Appearance"
-                            />
-                            <TabButton
-                                active={activeTab === 'agent'}
-                                onClick={() => setActiveTab('agent')}
-                                icon={<Cpu size={16} />}
-                                label="Agent"
                             />
                         </div>
 
@@ -123,28 +117,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                                     </div>
                                 </div>
                             )}
-
-                            {activeTab === 'agent' && (
-                                <div className="space-y-6">
-                                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <Zap size={18} className="text-blue-600" />
-                                            <h3 className="font-medium text-blue-900">Performance Mode</h3>
-                                        </div>
-                                        <p className="text-sm text-blue-700/80">Optimize for speed. Responses may be less detailed but generated faster.</p>
-                                        <div className="mt-3 flex items-center justify-between">
-                                            <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Status</span>
-                                            <span className="px-2 py-1 bg-blue-200 text-blue-800 text-xs rounded-md font-medium">Active</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        <ToggleRow label="Auto-correct typos" enabled={true} />
-                                        <ToggleRow label="Code explanation details" enabled={true} />
-                                        <ToggleRow label="Voice responses" enabled={false} />
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
                         {/* Footer */}
@@ -179,13 +151,4 @@ const ThemeOption = ({ label, icon, active, onClick }: { label: string, icon: Re
         <div className="mb-2">{icon}</div>
         <span className="text-sm font-medium">{label}</span>
     </button>
-);
-
-const ToggleRow = ({ label, enabled }: { label: string, enabled: boolean }) => (
-    <div className="flex items-center justify-between py-2">
-        <span className="text-sm text-gray-700">{label}</span>
-        <div className={`w-10 h-6 rounded-full p-1 transition-colors ${enabled ? 'bg-green-500' : 'bg-gray-200'}`}>
-            <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${enabled ? 'translate-x-4' : ''}`} />
-        </div>
-    </div>
 );

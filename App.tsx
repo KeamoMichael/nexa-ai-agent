@@ -11,6 +11,7 @@ import { detectFileOperation, getFileOperationAck } from './utils/fileOperationD
 import { generatePlan, executeStep, generateFinalReport, analyzeIntent, generateChatResponse, generateStepLogs } from './services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HistorySidebar } from './components/HistorySidebar';
+import { SettingsModal } from './components/SettingsModal';
 import { ChatHistory } from './types';
 import manusLogo from './assets/manus logo.png';
 import { Thinking } from './components/Thinking';
@@ -20,6 +21,7 @@ export default function App() {
   const [chats, setChats] = useState<ChatHistory[]>([]);
   const [activeChatId, setActiveChatId] = useState<string>('');
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [isSettingsOpen, setSettingsOpen] = useState(false);
 
   // Current Chat State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -429,6 +431,12 @@ export default function App() {
         onDeleteChat={deleteChat}
         onShareChat={shareChat}
         onNewChat={createNewChat}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
 
       {/* Main Content - Pushes right when sidebar opens */}
