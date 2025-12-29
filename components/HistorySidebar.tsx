@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MessageSquare, MoreVertical, Edit2, Trash2, Share2, Plus, Search } from 'lucide-react';
+import { X, MessageSquare, MoreVertical, Edit2, Trash2, Share2, Plus, Search, PanelLeft, Edit3, ChevronDown, ChevronRight } from 'lucide-react';
 import { ChatHistory } from '../types';
 import manusLogo from '../assets/manus logo.png';
 
 interface HistorySidebarProps {
-    isOpen: boolean;
+    isOpen: boolean; // Controls Expanded (true) vs Mini (false) on Desktop. Controls Visible (true) vs Hidden (false) on Mobile.
     onClose: () => void;
     chats: ChatHistory[];
     activeChat: string;
@@ -31,6 +31,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [renaming, setRenaming] = useState<string | null>(null);
     const [renameValue, setRenameValue] = useState('');
+    const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
 
     const formatDate = (timestamp: number) => {
         const date = new Date(timestamp);
@@ -74,145 +75,143 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         setRenaming(null);
     };
 
-    const SidebarContent = () => (
-        <>
-            {/* Header with Logo */}
-            <div className="flex items-center gap-3 p-4 border-b border-gray-100">
-                <img src={manusLogo} alt="Manus" className="w-6 h-6" />
-                <span className="text-base font-sans font-semibold text-gray-900">manus</span>
-            </div>
+    // Shared Content for both modes (logic handles visuals)
+    const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => {
+        const showFull = mobile || isOpen;
 
-            {/* Action Buttons */}
-            <div className="p-3 space-y-2 border-b border-gray-100">
-                <button
-                    onClick={() => {
-                        onNewChat();
-                        if (window.innerWidth < 768) onClose();
-                    }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 rounded-lg transition-colors text-left group"
-                >
-                    <div className="w-5 h-5 flex items-center justify-center">
-                        <Plus size={18} className="text-gray-600 group-hover:text-gray-900" />
+        return (
+            <div className="flex flex-col h-full w-full">
+                {/* Header */}
+                <div className={`flex items-center h-14 min-h-[56px] px-3 border-b border-transparent ${showFull ? 'justify-between' : 'justify-center'}`}>
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <img src={manusLogo} alt="Manus" className="w-6 h-6 shrink-0 rounded-sm" />
+                        {showFull && <span className="text-base font-sans font-semibold text-gray-900 truncate">manus</span>}
                     </div>
-                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">New task</span>
-                </button>
 
-                <button
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 rounded-lg transition-colors text-left group"
-                >
-                    <div className="w-5 h-5 flex items-center justify-center">
-                        <Search size={18} className="text-gray-600 group-hover:text-gray-900" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Search</span>
-                </button>
-            </div>
+                    {showFull && (
+                        <button
+                            onClick={onClose}
+                            className="p-1.5 hover:bg-gray-200 rounded-md text-gray-500 transition-colors"
+                            title="Collapse sidebar"
+                        >
+                            <PanelLeft size={18} />
+                        </button>
+                    )}
+                </div>
 
-            {/* Chat List - Ghost scrollbar */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-1">
-                {chats.length === 0 ? (
-                    <div className="text-center py-12 text-gray-400">
-                        <MessageSquare size={40} className="mx-auto mb-3 opacity-20" />
-                        <p className="text-xs">No chats yet</p>
-                    </div>
-                ) : (
-                    chats.map((chat) => (
-                        <div key={chat.id} className="relative">
-                            {renaming === chat.id ? (
-                                <div className="p-2.5 bg-gray-50 rounded-lg border border-gray-200">
-                                    <input
-                                        type="text"
-                                        value={renameValue}
-                                        onChange={(e) => setRenameValue(e.target.value)}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') handleRename(chat.id);
-                                            if (e.key === 'Escape') setRenaming(null);
-                                        }}
-                                        onBlur={() => handleRename(chat.id)}
-                                        autoFocus
-                                        className="w-full px-2 py-1 text-sm bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-300"
-                                    />
-                                </div>
-                            ) : (
-                                <div
-                                    onClick={() => {
-                                        onSelectChat(chat.id);
-                                        if (window.innerWidth < 768) onClose();
-                                    }}
-                                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all ${chat.id === activeChat
-                                            ? 'bg-gray-100'
-                                            : 'hover:bg-gray-50'
-                                        }`}
-                                >
-                                    <MessageSquare
-                                        size={16}
-                                        className={chat.id === activeChat ? 'text-gray-900' : 'text-gray-400'}
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                        <p className={`text-sm font-medium truncate ${chat.id === activeChat ? 'text-gray-900' : 'text-gray-700'
-                                            }`}>
-                                            {chat.title}
-                                        </p>
-                                        <p className="text-xs text-gray-400">
-                                            {formatDate(chat.updatedAt)}
-                                        </p>
-                                    </div>
+                {/* Primary Actions */}
+                <div className="px-2 py-4 space-y-1 border-b border-transparent">
+                    <button
+                        onClick={() => {
+                            onNewChat();
+                            if (mobile) onClose();
+                        }}
+                        className={`flex items-center ${showFull ? 'gap-3 px-3' : 'justify-center'} py-2 rounded-lg hover:bg-gray-200 transition-colors group w-full`}
+                        title="New task"
+                    >
+                        <Edit3 size={18} className="text-gray-700 shrink-0" />
+                        {showFull && <span className="text-sm font-medium text-gray-900">New task</span>}
+                    </button>
 
-                                    <div className="relative">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setMenuOpen(menuOpen === chat.id ? null : chat.id);
-                                            }}
-                                            className="p-1 rounded transition-all opacity-0 group-hover:opacity-100 hover:bg-gray-200"
-                                        >
-                                            <MoreVertical size={14} className="text-gray-600" />
-                                        </button>
+                    <button
+                        className={`flex items-center ${showFull ? 'gap-3 px-3' : 'justify-center'} py-2 rounded-lg hover:bg-gray-200 transition-colors group w-full`}
+                        title="Search"
+                    >
+                        <Search size={18} className="text-gray-500 shrink-0 group-hover:text-gray-800" />
+                        {showFull && <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900">Search</span>}
+                    </button>
+                </div>
 
-                                        {menuOpen === chat.id && (
-                                            <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
-                                                <button
-                                                    onClick={(e) => handleMenuAction(chat.id, 'rename', e)}
-                                                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left text-sm text-gray-700"
-                                                >
-                                                    <Edit2 size={14} />
-                                                    Rename
-                                                </button>
-                                                <button
-                                                    onClick={(e) => handleMenuAction(chat.id, 'share', e)}
-                                                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 text-left text-sm text-gray-700"
-                                                >
-                                                    <Share2 size={14} />
-                                                    Share
-                                                </button>
-                                                <div className="border-t border-gray-100"></div>
-                                                <button
-                                                    onClick={(e) => handleMenuAction(chat.id, 'delete', e)}
-                                                    className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm ${deleteConfirm === chat.id
-                                                            ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                                                            : 'text-gray-700 hover:bg-gray-50'
-                                                        }`}
-                                                >
-                                                    <Trash2 size={14} />
-                                                    {deleteConfirm === chat.id ? 'Click to confirm' : 'Delete'}
-                                                </button>
-                                            </div>
+                {/* Chat List */}
+                <div className="flex-1 overflow-y-auto px-2 mt-2 custom-scrollbar">
+                    {showFull ? (
+                        <>
+                            {/* Collapsible Header */}
+                            <button
+                                onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+                                className="flex items-center gap-2 px-2 py-2 text-xs font-medium text-gray-500 hover:text-gray-800 w-full mb-1 transition-colors select-none"
+                            >
+                                {isHistoryExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                All tasks
+                            </button>
+
+                            {/* Collapsible Content */}
+                            <AnimatePresence>
+                                {isHistoryExpanded && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="overflow-hidden"
+                                    >
+                                        {chats.length === 0 ? (
+                                            <p className="px-6 text-xs text-gray-400 py-2">No tasks yet</p>
+                                        ) : (
+                                            chats.map((chat) => (
+                                                <div key={chat.id} className="relative group/item">
+                                                    {renaming === chat.id ? (
+                                                        <div className="mx-2 p-1 border rounded bg-white shadow-sm">
+                                                            <input
+                                                                autoFocus
+                                                                className="w-full text-sm outline-none bg-transparent px-1"
+                                                                value={renameValue}
+                                                                onChange={e => setRenameValue(e.target.value)}
+                                                                onBlur={() => handleRename(chat.id)}
+                                                                onKeyDown={e => {
+                                                                    if (e.key === 'Enter') handleRename(chat.id);
+                                                                    if (e.key === 'Escape') setRenaming(null);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            onClick={() => {
+                                                                onSelectChat(chat.id);
+                                                                if (mobile) onClose();
+                                                            }}
+                                                            className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer text-sm mb-0.5 transition-colors ${activeChat === chat.id ? 'bg-gray-200 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-100'
+                                                                }`}
+                                                            title={chat.title}
+                                                        >
+                                                            <MessageSquare size={16} className={`shrink-0 ${activeChat === chat.id ? 'text-gray-900' : 'text-gray-400'}`} />
+                                                            <span className="truncate flex-1">{chat.title}</span>
+                                                            <div className="opacity-0 group-hover/item:opacity-100 flex items-center">
+                                                                <button
+                                                                    onClick={(e) => handleMenuAction(chat.id, 'rename', e)}
+                                                                    className="p-1 hover:bg-gray-300 rounded text-gray-500 hover:text-gray-800"
+                                                                >
+                                                                    <MoreVertical size={14} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))
                                         )}
-                                    </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </>
+                    ) : (
+                        // Mini Mode: Icons Only
+                        <div className="space-y-1 pt-2">
+                            {chats.map((chat) => (
+                                <div
+                                    key={chat.id}
+                                    onClick={() => onSelectChat(chat.id)}
+                                    className={`flex justify-center py-2.5 rounded-md cursor-pointer transition-colors ${activeChat === chat.id ? 'bg-gray-200 text-gray-900' : 'text-gray-400 hover:bg-gray-100'
+                                        }`}
+                                    title={chat.title}
+                                >
+                                    <MessageSquare size={18} />
                                 </div>
-                            )}
+                            ))}
                         </div>
-                    ))
-                )}
+                    )}
+                </div>
             </div>
-
-            {/* Footer */}
-            <div className="p-3 border-t border-gray-100">
-                <p className="text-xs text-gray-400 text-center">
-                    {chats.length} chat{chats.length !== 1 ? 's' : ''}
-                </p>
-            </div>
-        </>
-    );
+        );
+    };
 
     return (
         <>
@@ -229,21 +228,22 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 )}
             </AnimatePresence>
 
-            {/* Desktop Sidebar - Part of flow, animates width */}
+            {/* Desktop Sidebar - Mini (60px) <-> Expanded (260px) */}
             <motion.div
                 initial={false}
                 animate={{
-                    width: isOpen ? '260px' : '0px',
+                    width: isOpen ? '260px' : '60px',
                     transition: { type: 'spring', damping: 30, stiffness: 300 }
                 }}
-                className="hidden md:flex flex-col bg-white border-r border-gray-200 overflow-hidden h-full"
+                className="hidden md:flex flex-col bg-[#F9F9F9] border-r border-gray-200 overflow-hidden h-full z-20 shrink-0"
             >
-                <div className="w-[260px] h-full flex flex-col">
-                    <SidebarContent />
+                {/* Fixed width inner container prevents content jumping during resize */}
+                <div className="w-full h-full">
+                    <SidebarContent mobile={false} />
                 </div>
             </motion.div>
 
-            {/* Mobile Sidebar - Fixed overlay */}
+            {/* Mobile Sidebar - Fixed Overlay (Full Width or 260px) */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -251,32 +251,28 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         animate={{ x: 0 }}
                         exit={{ x: '-100%' }}
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                        className="fixed left-0 top-0 h-full w-[260px] bg-white border-r border-gray-200 z-50 flex flex-col shadow-lg md:hidden"
+                        className="fixed left-0 top-0 h-full w-[280px] bg-white border-r border-gray-200 z-50 flex flex-col shadow-lg md:hidden"
                     >
-                        <SidebarContent />
+                        <SidebarContent mobile={true} />
                     </motion.div>
                 )}
             </AnimatePresence>
 
             <style jsx>{`
-        /* Ghost scrollbar - visible only on hover */
-        .overflow-y-auto::-webkit-scrollbar {
-          width: 6px;
-        }
-        .overflow-y-auto::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .overflow-y-auto::-webkit-scrollbar-thumb {
-          background: transparent;
-          border-radius: 3px;
-        }
-        .overflow-y-auto:hover::-webkit-scrollbar-thumb {
-          background: rgb(209, 213, 219);
-        }
-        .overflow-y-auto:hover::-webkit-scrollbar-thumb:hover {
-          background: rgb(156, 163, 175);
-        }
-      `}</style>
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: transparent;
+                    border-radius: 2px;
+                }
+                .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+                    background: #e5e7eb;
+                }
+            `}</style>
         </>
     );
 };
