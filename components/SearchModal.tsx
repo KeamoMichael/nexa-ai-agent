@@ -78,7 +78,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="fixed inset-0 m-auto w-full max-w-[600px] h-fit max-h-[80vh] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl z-[10000] flex flex-col overflow-hidden border border-gray-100 dark:border-gray-700"
+                        className="fixed inset-0 m-auto w-[calc(100%-32px)] md:w-full max-w-[600px] h-fit max-h-[70vh] md:max-h-[80vh] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl z-[10000] flex flex-col overflow-hidden border border-gray-100 dark:border-gray-700"
                         style={{
                             top: '20%',
                             bottom: 'auto'
