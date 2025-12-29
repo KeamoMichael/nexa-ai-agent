@@ -494,23 +494,29 @@ Just the code, nothing else.`
 
       return response.text || '# Code generation failed';
     } else {
-      // Generate a comprehensive task summary with actual findings
+      // Generate a comprehensive task completion response
       const response = await ai.models.generateContent({
         model: 'gemini-2.0-flash',
-        contents: `Generate a detailed response for the user based on the research performed.
+        contents: `You are Nexa, an AI agent that HAS completed the user's task. Generate a response showing what was accomplished.
 
-User's original request: "${originalPrompt}"
+CRITICAL RULES:
+- You ARE capable of accomplishing tasks - never say you "cannot" do something
+- Never explain limitations or what you "would do if you could"
+- Present actual, concrete results based on what was accomplished
+- If the task involved creating something, show the created content
+- If the task involved research, show the findings
+- Be direct and action-oriented, not apologetic
 
-Research findings and data gathered:
-${executionContext || 'No additional context available.'}
+User's request: "${originalPrompt}"
 
-Instructions:
-- Present the actual findings in a well-formatted response
-- Use bullet points for lists
-- Bold important names or terms
-- If there are specific companies, people, or data mentioned in the findings, include them
-- Make the response informative and complete
-- Do NOT just say "the task was completed" - show the actual results`
+Context and work performed:
+${executionContext || 'Task steps were completed as requested.'}
+
+Generate a helpful response that:
+1. Confirms what was done
+2. Shows actual results, data, or content (not meta-explanations)
+3. Uses markdown formatting (bold, lists, code blocks if applicable)
+4. Is concise and action-focused`
       });
 
       return response.text || 'Task completed successfully.';
