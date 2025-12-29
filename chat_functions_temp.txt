@@ -1,0 +1,85 @@
+  }, [currentPlan]);
+
+  // Auto-save current chat when messages change
+  useEffect(() => {
+    if (activeChatId && messages.length > 0) {
+      setChats(prev => prev.map(chat => 
+        chat.id === activeChatId
+          ? { ...chat, messages, updatedAt: Date.now(), title: generateChatTitle(messages) }
+          : chat
+      ));
+    }
+  }, [messages, activeChatId]);
+
+  // Chat Management Functions
+  const generateChatTitle = (msgs: Message[]): string => {
+    const firstUserMsg = msgs.find(m => m.role === 'user');
+    if (firstUserMsg) {
+      const title = firstUserMsg.content.slice(0, 50);
+      return title.length < firstUserMsg.content.length ? title + '...' : title;
+    }
+    return 'New Chat';
+  };
+
+  const createNewChat = () => {
+    const newChat: ChatHistory = {
+      id: Date.now().toString(),
+      title: 'New Chat',
+      messages: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    setChats(prev => [newChat, ...prev]);
+    setActiveChatId(newChat.id);
+    setMessages([]);
+    setCurrentPlan(null);
+    setAgentState(AgentState.IDLE);
+  };
+
+  const switchChat = (id: string) => {
+    const chat = chats.find(c => c.id === id);
+    if (chat) {
+      setActiveChatId(id);
+      setMessages(chat.messages);
+      setCurrentPlan(null);
+      setAgentState(AgentState.IDLE);
+    }
+  };
+
+  const renameChat = (id: string, newTitle: string) => {
+    setChats(prev => prev.map(chat =>
+      chat.id === id ? { ...chat, title: newTitle, updatedAt: Date.now() } : chat
+    ));
+  };
+
+  const deleteChat = (id: string) => {
+    setChats(prev => {
+      const filtered = prev.filter(c => c.id !== id);
+      // If deleting active chat, switch to another or create new
+      if (id === activeChatId) {
+        if (filtered.length > 0) {
+          setActiveChatId(filtered[0].id);
+          setMessages(filtered[0].messages);
+        } else {
+          createNewChat();
+        }
+      }
+      return filtered;
+    });
+  };
+
+  const shareChat = (id: string) => {
+    const shareUrl = `${window.location.origin}/?chat=${id}`;
+    navigator.clipboard.writeText(shareUrl);
+    alert('Share link copied to clipboard!');
+  };
+
+  const getCurrentChatTitle = (): string => {
+    const chat = chats.find(c => c.id === activeChatId);
+    return chat?.title || 'New Chat';
+  };
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    setIsLoginRequired(false);
+  };
