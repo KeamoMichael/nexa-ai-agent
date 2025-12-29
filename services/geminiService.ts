@@ -21,19 +21,20 @@ export interface Model {
 
 export const AVAILABLE_MODELS: Model[] = [
   {
-    id: 'gemini-exp-1206',
-    name: 'Nexa 1.5 Pro',
-    displayName: 'Nexa 1.5 Pro',
-    tag: 'gemini-exp-1206',
-    description: 'High-performance agent designed for complex tasks.',
-    badge: 'Pro'
-  },
-  {
     id: 'gemini-2.0-flash-exp',
     name: 'Nexa 1.0 Fast',
     displayName: 'Nexa 1.0 Fast',
-    tag: 'gemini-2.0-flash-exp',
-    description: 'A lightweight agent for everyday tasks.'
+    tag: 'Fast',
+    description: 'A lightweight agent for everyday tasks.',
+    badge: 'Fast'
+  },
+  {
+    id: 'gemini-exp-1206',
+    name: 'Nexa 1.5 Pro',
+    displayName: 'Nexa 1.5 Pro',
+    tag: 'Pro',
+    description: 'High-performance agent designed for complex tasks.',
+    badge: 'Pro'
   }
 ];
 

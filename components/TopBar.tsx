@@ -46,10 +46,10 @@ export const TopBar: React.FC<TopBarProps> = ({
         <div className="relative">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-2 text-sm font-medium text-gray-800 hover:opacity-70 transition-opacity"
+            className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-100 rounded-lg transition-colors group"
           >
-            <span>{currentModel.displayName}</span>
-            <ChevronDown size={14} className="text-gray-500" />
+            <span className="text-sm font-semibold text-gray-800">{currentModel.displayName}</span>
+            <ChevronDown size={14} className="text-gray-500 group-hover:text-gray-800 transition-colors" />
           </button>
 
           <AnimatePresence>
@@ -66,9 +66,9 @@ export const TopBar: React.FC<TopBarProps> = ({
                   initial={{ opacity: 0, scale: 0.95, y: -5 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                  className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 origin-top-left"
+                  className="absolute left-0 top-full mt-2 w-[320px] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50 origin-top-left p-1.5"
                 >
-                  <div className="py-1">
+                  <div className="flex flex-col gap-0.5">
                     {AVAILABLE_MODELS.map((model) => (
                       <button
                         key={model.id}
@@ -76,11 +76,28 @@ export const TopBar: React.FC<TopBarProps> = ({
                           onModelChange(model);
                           setIsOpen(false);
                         }}
-                        className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${currentModel.id === model.id ? 'bg-gray-50 text-gray-900 font-medium' : 'text-gray-600 hover:bg-gray-50'
+                        className={`w-full flex items-start gap-3 px-3 py-3 rounded-lg text-left transition-colors relative ${currentModel.id === model.id ? 'bg-gray-50' : 'hover:bg-gray-50'
                           }`}
                       >
-                        {model.displayName}
-                        {currentModel.id === model.id && <Check size={14} className="text-gray-900" />}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-sm font-semibold text-gray-900">{model.displayName}</span>
+                            {model.badge && (
+                              <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase tracking-wide">
+                                {model.badge}
+                              </span>
+                            )}
+                          </div>
+                          {model.description && (
+                            <p className="text-xs text-gray-500 leading-relaxed pr-6">{model.description}</p>
+                          )}
+                        </div>
+
+                        {currentModel.id === model.id && (
+                          <div className="shrink-0 mt-0.5">
+                            <Check size={16} className="text-gray-900" />
+                          </div>
+                        )}
                       </button>
                     ))}
                   </div>

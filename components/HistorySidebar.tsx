@@ -30,7 +30,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     onDeleteChat,
     onShareChat,
     onNewChat,
-    onOpenSettings
+    onOpenSettings,
+    username
 }) => {
     const [menuOpen, setMenuOpen] = useState<string | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -243,7 +244,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
     return (
         <>
-            {/* Mobile Backdrop - Kept for fade-in effect but fully covered by sidebar */}
+            {/* Mobile Backdrop */}
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -265,8 +266,35 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 }}
                 className="hidden md:flex flex-col bg-[#F9F9F9] border-r border-gray-200 overflow-hidden h-full z-20 shrink-0"
             >
-                <div className="w-full h-full">
-                    <SidebarContent mobile={false} />
+                <div className="w-full h-full flex flex-col">
+                    {/* Content Wrapper */}
+                    <div className="flex-1 overflow-hidden">
+                        <SidebarContent mobile={false} />
+                    </div>
+
+                    {/* Desktop Footer: Profile & Username */}
+                    <div className="p-3 border-t border-gray-100/50 mt-auto">
+                        <button
+                            onClick={onOpenSettings}
+                            className={`flex items-center ${isOpen ? 'gap-3 px-2' : 'justify-center'} w-full p-2 py-2.5 hover:bg-white hover:shadow-sm rounded-xl transition-all group border border-transparent hover:border-gray-100`}
+                        >
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shrink-0 shadow-sm relative overflow-hidden">
+                                {isOpen ? (
+                                    <User size={16} />
+                                ) : (
+                                    <User size={18} />
+                                )}
+                            </div>
+
+                            {/* Username - Only visible when expanded */}
+                            {isOpen && (
+                                <div className="flex flex-col items-start min-w-0 flex-1">
+                                    <span className="text-sm font-semibold text-gray-900 truncate w-full text-left">{username || 'User'}</span>
+                                    <span className="text-[10px] text-gray-500 truncate w-full text-left">Free Plan</span>
+                                </div>
+                            )}
+                        </button>
+                    </div>
                 </div>
             </motion.div>
 

@@ -5,7 +5,7 @@ import { PlannerWidget } from './components/PlannerWidget';
 import { InlinePlanWidget } from './components/InlinePlanWidget';
 import { LoginModal } from './components/LoginModal';
 import { MessageRenderer } from './components/MessageRenderer';
-import { Message, AgentState, Plan, Model, MODELS } from './types';
+import { Message, AgentState, Plan, Model } from './types';
 import { Plus, ArrowUp, FileText, Download, Check, Square, Mic } from 'lucide-react';
 import { detectFileOperation, getFileOperationAck } from './utils/fileOperationDetector';
 import { generatePlan, executeStep, generateFinalReport, analyzeIntent, generateChatResponse, generateStepLogs } from './services/geminiService';
@@ -16,6 +16,8 @@ import { RenameChatModal } from './components/RenameChatModal';
 import { ChatHistory } from './types';
 import manusLogo from './assets/manus logo.png';
 import { Thinking } from './components/Thinking';
+
+import { AVAILABLE_MODELS } from './services/geminiService';
 
 export default function App() {
   // Chat History State
@@ -30,7 +32,7 @@ export default function App() {
   const [inputValue, setInputValue] = useState('');
   const [agentState, setAgentState] = useState<AgentState>(AgentState.IDLE);
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
-  const [currentModel, setCurrentModel] = useState<Model>(MODELS[0]);
+  const [currentModel, setCurrentModel] = useState<Model>(AVAILABLE_MODELS[0]);
 
   // Auth & Session State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
