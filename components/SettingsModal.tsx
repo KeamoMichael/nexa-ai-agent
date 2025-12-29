@@ -72,7 +72,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             {activeTab === 'profile' && (
                                 <div className="space-y-6">
                                     <div className="flex flex-col items-center">
-                                        <div className="w-20 h-20 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-3 shadow-lg">
+                                        <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center text-white text-3xl font-bold mb-3 shadow-lg">
                                             {username.charAt(0)}
                                         </div>
                                         <button className="text-sm text-blue-600 font-medium hover:text-blue-700">Change Avatar</button>

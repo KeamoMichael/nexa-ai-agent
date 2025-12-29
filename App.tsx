@@ -6,7 +6,7 @@ import { InlinePlanWidget } from './components/InlinePlanWidget';
 import { LoginModal } from './components/LoginModal';
 import { MessageRenderer } from './components/MessageRenderer';
 import { Message, AgentState, Plan, Model } from './types';
-import { Plus, ArrowUp, FileText, Download, Check, Square, Mic } from 'lucide-react';
+import { Plus, ArrowUp, FileText, Download, Check, Square, Mic, X, File, FileArchive, Image as ImageIcon } from 'lucide-react';
 import { detectFileOperation, getFileOperationAck } from './utils/fileOperationDetector';
 import { generatePlan, executeStep, generateFinalReport, analyzeIntent, generateChatResponse, generateChatResponseStream, generateStepLogs } from './services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -18,6 +18,34 @@ import nexaLogo from './assets/Nexa AI agent logo PNG.png';
 import { Thinking } from './components/Thinking';
 
 import { AVAILABLE_MODELS } from './services/geminiService';
+
+// File attachment interface
+interface AttachedFile {
+  id: string;
+  file: File;
+  preview?: string; // For images
+  type: 'image' | 'pdf' | 'archive' | 'document' | 'code' | 'other';
+}
+
+// Helper to determine file type
+const getFileType = (file: File): AttachedFile['type'] => {
+  const ext = file.name.split('.').pop()?.toLowerCase() || '';
+  const mimeType = file.type;
+
+  if (mimeType.startsWith('image/')) return 'image';
+  if (ext === 'pdf' || mimeType === 'application/pdf') return 'pdf';
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) return 'archive';
+  if (['doc', 'docx', 'txt', 'rtf', 'odt'].includes(ext)) return 'document';
+  if (['js', 'ts', 'tsx', 'jsx', 'py', 'java', 'cpp', 'c', 'go', 'rs', 'md', 'html', 'css', 'json', 'xml', 'yaml', 'yml'].includes(ext)) return 'code';
+  return 'other';
+};
+
+// Format file size
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
 
 export default function App() {
   // Chat History State
@@ -33,6 +61,8 @@ export default function App() {
   const [agentState, setAgentState] = useState<AgentState>(AgentState.IDLE);
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
   const [currentModel, setCurrentModel] = useState<Model>(AVAILABLE_MODELS[0]);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth & Session State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -80,6 +110,57 @@ export default function App() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isStoppedRef = useRef(false);
+
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newFiles: AttachedFile[] = [];
+    const maxFiles = 10;
+    const currentCount = attachedFiles.length;
+
+    for (let i = 0; i < files.length && currentCount + newFiles.length < maxFiles; i++) {
+      const file = files[i];
+      const fileType = getFileType(file);
+      const attachedFile: AttachedFile = {
+        id: Date.now().toString() + i,
+        file,
+        type: fileType,
+      };
+
+      // Create preview for images
+      if (fileType === 'image') {
+        attachedFile.preview = URL.createObjectURL(file);
+      }
+
+      newFiles.push(attachedFile);
+    }
+
+    setAttachedFiles(prev => [...prev, ...newFiles]);
+    e.target.value = ''; // Reset input
+  };
+
+  // Remove attached file
+  const removeAttachment = (id: string) => {
+    setAttachedFiles(prev => {
+      const file = prev.find(f => f.id === id);
+      if (file?.preview) URL.revokeObjectURL(file.preview);
+      return prev.filter(f => f.id !== id);
+    });
+  };
+
+  // Get file icon based on type
+  const getFileIcon = (type: AttachedFile['type']) => {
+    switch (type) {
+      case 'image': return <ImageIcon size={20} />;
+      case 'pdf': return <FileText size={20} className="text-red-500" />;
+      case 'archive': return <FileArchive size={20} className="text-yellow-500" />;
+      case 'code': return <FileText size={20} className="text-blue-500" />;
+      case 'document': return <FileText size={20} className="text-blue-400" />;
+      default: return <File size={20} className="text-gray-400" />;
+    }
+  };
 
   // Auto-scroll for message container
   useEffect(() => {
@@ -672,7 +753,63 @@ export default function App() {
         {/* Bottom Input Bar - Minimal Multi-line Redesign with Ultra Tightened Spacing */}
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#F9F9F9] via-[#F9F9F9] to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pt-10 z-40">
           <div className="max-w-2xl mx-auto">
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,.pdf,.zip,.rar,.7z,.doc,.docx,.txt,.md,.py,.js,.ts,.tsx,.jsx,.html,.css,.json,.xml,.yaml,.yml"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+
             <div className={`flex flex-col bg-white dark:bg-gray-800 p-1 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-100 dark:border-gray-700 transition-all ${isLoginRequired ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
+
+              {/* Attached Files Display - Horizontal Slider */}
+              {attachedFiles.length > 0 && (
+                <div className="px-3 pt-2 pb-1">
+                  <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                    {attachedFiles.map((attachedFile) => (
+                      <div
+                        key={attachedFile.id}
+                        className="relative flex-shrink-0 group"
+                      >
+                        {attachedFile.type === 'image' && attachedFile.preview ? (
+                          <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                            <img
+                              src={attachedFile.preview}
+                              alt={attachedFile.file.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-40 h-14 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center gap-2 px-3">
+                            <div className="flex-shrink-0">
+                              {getFileIcon(attachedFile.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-gray-700 dark:text-gray-300 truncate font-medium">
+                                {attachedFile.file.name}
+                              </p>
+                              <p className="text-[10px] text-gray-500">
+                                {attachedFile.type.toUpperCase()} · {formatFileSize(attachedFile.file.size)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {/* Remove button */}
+                        <button
+                          onClick={() => removeAttachment(attachedFile.id)}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-700 dark:bg-gray-600 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-800"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">{attachedFiles.length}/10 files</p>
+                </div>
+              )}
 
               {/* Upper Text Area - Dynamically scales up to max-height, minimal vertical gaps */}
               <textarea
@@ -694,8 +831,9 @@ export default function App() {
               <div className="flex items-center justify-between mt-0 px-1 pb-0.5 pt-0.5">
                 {/* Left side: Upload */}
                 <button
-                  disabled={isLoginRequired}
-                  className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors"
+                  disabled={isLoginRequired || attachedFiles.length >= 10}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-8 h-8 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center text-gray-500 dark:text-gray-400 transition-colors disabled:opacity-50"
                 >
                   <Plus size={18} />
                 </button>
