@@ -66,14 +66,17 @@ io.on('connection', (socket) => {
 
       console.log(`[E2B] Sandbox created: ${sandbox.sandboxId}`);
 
-      // Start video stream
-      const stream = await sandbox.startStream();
-      const streamUrl = stream.url;
+      // Start video stream (correct E2B API)
+      await sandbox.stream.start({
+        requireAuth: false  // Set to true if you want password protection
+      });
+
+      // Get stream URL
+      const streamUrl = sandbox.stream.getUrl();
 
       // Store sandbox and stream
       activeSandboxes.set(socket.id, {
         sandbox,
-        stream,
         sandboxId: sandbox.sandboxId
       });
 
@@ -87,7 +90,7 @@ io.on('connection', (socket) => {
 
       // Optional: Open Chrome automatically
       try {
-        await sandbox.commands.run('google-chrome https://google.com &');
+        await sandbox.launch('google-chrome');
         console.log('✓ Chrome launched');
       } catch (e) {
         console.log('Note: Chrome launch failed (may not be pre-installed)');
@@ -108,8 +111,8 @@ io.on('connection', (socket) => {
     }
 
     try {
-      // Open URL in Chrome
-      await session.sandbox.commands.run(`google-chrome "${url}" &`);
+      // Open URL in Chrome using launch
+      await session.sandbox.launch(`google-chrome ${url}`);
       socket.emit('navigation-complete');
       console.log(`✓ Navigated to: ${url}`);
     } catch (error) {
