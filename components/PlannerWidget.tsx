@@ -21,12 +21,11 @@ interface ToolViewProps {
 
 const BrowserView = ({ className = "", isActive = true }: ToolViewProps) => {
     const [liveViewUrl, setLiveViewUrl] = useState<string>('');
-    const [status, setStatus] = useState<string>('Initializing...');
+    const [status, setStatus] = useState<string>('Connecting...');
     const [error, setError] = useState<string>('');
 
     useEffect(() => {
-        if (!isActive) return;
-
+        // Always connect - we want live preview even in collapsed state!
         const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin;
         const socket = io(SOCKET_URL);
 
@@ -59,7 +58,7 @@ const BrowserView = ({ className = "", isActive = true }: ToolViewProps) => {
             socket.emit('stop-browser');
             socket.disconnect();
         };
-    }, [isActive]);
+    }, []); // Remove isActive dependency - always connect!
 
     return (
         <div className={`bg-white flex flex-col font-sans w-full h-full overflow-hidden ${className}`}>
