@@ -31,31 +31,31 @@ const BrowserView = ({ className = "", isActive = true }: ToolViewProps) => {
         const socket = io(SOCKET_URL);
 
         socket.on('connect', () => {
-            console.log('[BrowserBase] Socket connected');
-            setStatus('Launching cloud browser...');
+            console.log('[E2B] Socket connected');
+            setStatus('Launching cloud desktop...');
             socket.emit('start-browser');
         });
 
         socket.on('browser-ready', (data: { liveViewUrl: string; sessionId: string }) => {
-            console.log('[BrowserBase] Browser ready:', data);
+            console.log('[E2B] Desktop ready:', data);
             setLiveViewUrl(data.liveViewUrl);
             setStatus('Connected');
             setError('');
         });
 
         socket.on('browser-error', (errorData: { message: string }) => {
-            console.error('[BrowserBase] Error:', errorData);
+            console.error('[E2B] Error:', errorData);
             setStatus('Error');
             setError(errorData.message);
         });
 
         socket.on('disconnect', () => {
-            console.log('[BrowserBase] Socket disconnected');
+            console.log('[E2B] Socket disconnected');
             setStatus('Disconnected');
         });
 
         return () => {
-            console.log('[BrowserBase] Cleaning up socket connection');
+            console.log('[E2B] Cleaning up socket connection');
             socket.emit('stop-browser');
             socket.disconnect();
         };
@@ -72,7 +72,7 @@ const BrowserView = ({ className = "", isActive = true }: ToolViewProps) => {
                 </div>
                 <div className="flex-1 bg-white rounded flex items-center px-2 h-4 sm:h-5 shadow-sm ml-2 border border-gray-200">
                     <div className="text-[8px] sm:text-[10px] text-gray-400 truncate flex-1 text-center">
-                        {liveViewUrl ? 'browserbase.com' : 'cloud browser'}
+                        {liveViewUrl ? 'e2b.dev' : 'cloud desktop'}
                     </div>
                 </div>
             </div>
@@ -90,15 +90,15 @@ const BrowserView = ({ className = "", isActive = true }: ToolViewProps) => {
                 ) : error ? (
                     <div className="flex flex-col items-center justify-center h-full gap-2 p-4">
                         <Globe size={32} className="text-red-400" />
-                        <span className="text-xs text-red-600 font-medium">Browser Unavailable</span>
+                        <span className="text-xs text-red-600 font-medium">Desktop Unavailable</span>
                         <span className="text-[10px] text-gray-500 text-center">{error}</span>
-                        <span className="text-[9px] text-gray-400 text-center">Configure BROWSERBASE_API_KEY</span>
+                        <span className="text-[9px] text-gray-400 text-center">Configure E2B_API_KEY</span>
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full gap-2">
                         <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                         <span className="text-xs text-gray-600 font-medium">{status}</span>
-                        <span className="text-[10px] text-gray-400">BrowserBase Cloud</span>
+                        <span className="text-[10px] text-gray-400">E2B Cloud Desktop</span>
                     </div>
                 )}
             </div>
