@@ -612,7 +612,7 @@ export default function App() {
         <PlannerWidget plan={currentPlan} />
 
         {/* Bottom Input Bar - Minimal Multi-line Redesign with Ultra Tightened Spacing */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#F9F9F9] via-[#F9F9F9] to-transparent pt-10 z-40">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#F9F9F9] via-[#F9F9F9] to-transparent pt-10 z-40">
           <div className="max-w-2xl mx-auto">
             <div className={`flex flex-col bg-white p-1 rounded-3xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] border border-gray-100 transition-all ${isLoginRequired ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
 

@@ -71,14 +71,14 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 bg-black/20 backdrop-blur-[1px] z-50"
+                        className="fixed inset-0 bg-black/20 backdrop-blur-[1px] z-[100]"
                     />
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: -20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -20 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
-                        className="fixed inset-0 m-auto w-full max-w-[600px] h-fit max-h-[80vh] bg-white rounded-2xl shadow-2xl z-50 flex flex-col overflow-hidden border border-gray-100"
+                        className="fixed inset-0 m-auto w-full max-w-[600px] h-fit max-h-[80vh] bg-white rounded-2xl shadow-2xl z-[100] flex flex-col overflow-hidden border border-gray-100"
                         style={{
                             top: '20%',
                             bottom: 'auto'
@@ -168,7 +168,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                             })}
 
                             {/* Empty State */}
-                            {Object.values(groupedChats).every(g => g.length === 0) && (
+                            {Object.values(groupedChats).every((g: ChatHistory[]) => g.length === 0) && (
                                 <div className="py-12 text-center">
                                     <p className="text-gray-400 text-sm">No tasks found matching "{searchTerm}"</p>
                                 </div>
