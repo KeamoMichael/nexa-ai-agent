@@ -142,15 +142,40 @@ Return ONLY the word "chat" or "task".`,
   }
 };
 
-// 2. Simple Chat Response
+// 2. Simple Chat Response (non-streaming fallback)
 export const generateChatResponse = async (prompt: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.0-flash',
       contents: prompt,
     });
     return response.text || "I'm here to help.";
   } catch (e) {
+    return "I'm having trouble connecting right now.";
+  }
+};
+
+// 2b. Streaming Chat Response
+export const generateChatResponseStream = async (
+  prompt: string,
+  onChunk: (text: string) => void
+): Promise<string> => {
+  try {
+    const response = await ai.models.generateContentStream({
+      model: 'gemini-2.0-flash',
+      contents: prompt,
+    });
+
+    let fullText = '';
+    for await (const chunk of response) {
+      const chunkText = chunk.text || '';
+      fullText += chunkText;
+      onChunk(fullText); // Send accumulated text to callback
+    }
+
+    return fullText || "I'm here to help.";
+  } catch (e) {
+    console.error('Streaming error:', e);
     return "I'm having trouble connecting right now.";
   }
 };

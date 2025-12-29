@@ -8,7 +8,7 @@ import { MessageRenderer } from './components/MessageRenderer';
 import { Message, AgentState, Plan, Model } from './types';
 import { Plus, ArrowUp, FileText, Download, Check, Square, Mic } from 'lucide-react';
 import { detectFileOperation, getFileOperationAck } from './utils/fileOperationDetector';
-import { generatePlan, executeStep, generateFinalReport, analyzeIntent, generateChatResponse, generateStepLogs } from './services/geminiService';
+import { generatePlan, executeStep, generateFinalReport, analyzeIntent, generateChatResponse, generateChatResponseStream, generateStepLogs } from './services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HistorySidebar } from './components/HistorySidebar';
 import { SettingsModal } from './components/SettingsModal';
@@ -275,20 +275,28 @@ export default function App() {
     // --- CASE A: Simple Chat ---
     if (intent === 'chat') {
       if (isStoppedRef.current) { handleTermination(); return; }
-      const responseText = await generateChatResponse(userText);
 
-      if (isStoppedRef.current) { handleTermination(); return; }
-
+      // Create message first with empty content for streaming
+      const msgId = (Date.now() + 1).toString();
       const assistantMsg: Message = {
-        id: (Date.now() + 1).toString(),
+        id: msgId,
         role: 'assistant',
-        content: responseText,
+        content: '',
         type: 'text',
         modelTag: currentModel.tag
       };
 
       setMessages(prev => [...prev, assistantMsg]);
       setAgentState(AgentState.IDLE);
+
+      // Stream response and update message content progressively
+      await generateChatResponseStream(userText, (streamedText) => {
+        if (isStoppedRef.current) return;
+        setMessages(prev => prev.map(msg =>
+          msg.id === msgId ? { ...msg, content: streamedText } : msg
+        ));
+      });
+
       return;
     }
 
