@@ -229,9 +229,43 @@ export default function App() {
       await new Promise(r => setTimeout(r, 500)); // Brief pause before next step
     }
 
-    // 4. Finalize
+    // 4. Finalize - Detect if user requested a specific file
     if (isStoppedRef.current) { handleTermination(); return; }
-    const finalReport = await generateFinalReport(userText, updatedSteps.map(s => s.description));
+
+    // Check if user requested a specific file creation
+    const fileMatch = userText.match(/create.*?([a-zA-Z0-9_-]+\.(py|js|html|css|json|txt|md|tsx|ts|jsx))/i);
+    const requestedFile = fileMatch ? fileMatch[1] : null;
+
+    let finalContent = '';
+    let fileName = '';
+    let fileType = '';
+
+    if (requestedFile) {
+      // User requested a specific file - generate it!
+      const extension = requestedFile.split('.').pop()!;
+      finalContent = await generateFinalReport(userText, updatedSteps.map(s => s.description));
+      fileName = requestedFile;
+
+      // Map extension to file type
+      const typeMap: Record<string, string> = {
+        'py': 'Python',
+        'js': 'JavaScript',
+        'ts': 'TypeScript',
+        'tsx': 'TypeScript React',
+        'jsx': 'JavaScript React',
+        'html': 'HTML',
+        'css': 'CSS',
+        'json': 'JSON',
+        'txt': 'Text',
+        'md': 'Markdown'
+      };
+      fileType = typeMap[extension] || 'Code';
+    } else {
+      // General task - create summary report
+      finalContent = await generateFinalReport(userText, updatedSteps.map(s => s.description));
+      fileName = `Result_${userText.substring(0, 10).replace(/\s/g, '_')}.md`;
+      fileType = 'Markdown';
+    }
 
     if (isStoppedRef.current) { handleTermination(); return; }
 
@@ -240,13 +274,13 @@ export default function App() {
     const fileMsg: Message = {
       id: (Date.now() + 3).toString(),
       role: 'assistant',
-      content: finalReport,
+      content: finalContent,
       type: 'file',
       modelTag: currentModel.tag,
       fileData: {
-        name: `Result_${userText.substring(0, 10).replace(/\s/g, '_')}.md`,
-        type: 'Markdown',
-        size: '2KB'
+        name: fileName,
+        type: fileType,
+        size: `${Math.ceil(finalContent.length / 1024)}KB`
       }
     };
 
