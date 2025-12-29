@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, Type } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import { PlanStep } from "../types"; // Keep existing import
 import { io, Socket } from 'socket.io-client'; // Re-add Socket type
 import JSZip from 'jszip';
@@ -8,7 +8,7 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 if (!apiKey) {
   throw new Error('Missing VITE_GEMINI_API_KEY');
 }
-const ai = new GoogleGenerativeAI(apiKey); // Initialize with new class and key
+const ai = new GoogleGenAI({ apiKey });
 
 // Socket.IO connection for E2B browser control
 const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin;

@@ -351,7 +351,12 @@ export default function App() {
 
                     {msg.type === 'file' && msg.fileData && (
                       <div className="mt-4">
-                        <p className="text-gray-800 text-[15px] leading-relaxed mb-3">{msg.content.substring(0, 150)}...</p>
+                        <p className="text-gray-800 text-[15px] leading-relaxed mb-3">
+                          {msg.isZip
+                            ? `I've created ${msg.fileData.name} with all the necessary project files compressed and ready for download.`
+                            : `I've created the file ${msg.fileData.name} for you.`
+                          }
+                        </p>
 
                         <div
                           className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group shadow-sm"
