@@ -160,84 +160,68 @@ export const generateStepLogs = async (stepDescription: string, context: string)
   }
 };
 
-// 5. Execute Step with Browser Control and Tavily Search
+// 5. Execute Step with Intelligent Tool Selection
 export const executeStep = async (step: string, context: string): Promise<string> => {
-  let searchResults = "";
   const lowerStep = step.toLowerCase();
 
-  // --- Check if this is a browsing task (needs E2B browser) ---
-  if (lowerStep.includes('browse') || lowerStep.includes('visit') || lowerStep.includes('open') ||
-    lowerStep.includes('navigate') || lowerStep.includes('go to')) {
+  // First, classify what tool this step needs
+  const toolDecision = await classifyStepTool(step);
+  console.log(`[Agent] Step: "${step}" → Tool: ${toolDecision}`);
 
+  // --- BROWSER: Explicit browsing tasks ---
+  if (toolDecision === 'browser') {
     const urlMatch = step.match(/(https?:\/\/[^\s]+|[a-z0-9-]+\.[a-z]+)/i);
     const url = urlMatch ? (urlMatch[0].startsWith('http') ? urlMatch[0] : `https://${urlMatch[0]}`) : 'https://google.com';
 
     try {
-      console.log(`[Agent] Browsing task detected, initializing browser...`);
+      console.log(`[Agent] Initializing E2B browser for: ${url}`);
       await initBrowser();
 
-      // Navigate to URL
       browserSocket!.emit('navigate', url);
 
-      // Wait for navigation to complete
       await new Promise<void>((resolve) => {
         browserSocket!.once('navigation-complete', () => resolve());
-        setTimeout(() => resolve(), 5000); // Timeout fallback
+        setTimeout(() => resolve(), 5000);
       });
 
-      searchResults = `Navigated to ${url} using E2B cloud desktop browser. Page is now visible in the desktop preview.`;
       console.log(`[Agent] Successfully browsed to ${url}`);
+      return `Navigated to ${url} using E2B cloud desktop browser. Page is now visible in the preview.`;
     } catch (e) {
-      console.error('[Agent] Browser task failed:', e);
-      searchResults = `Browser unavailable: ${e instanceof Error ? e.message : 'Unknown error'}. Falling back to internal knowledge.`;
+      console.error('[Agent] Browser failed:', e);
+      return `Browser unavailable: ${e instanceof Error ? e.message : 'Unknown error'}`;
     }
   }
 
-  // --- Or use Tavily for quick fact-finding searches ---
-  else if (lowerStep.includes('search') || lowerStep.includes('google') ||
-    lowerStep.includes('research') || lowerStep.includes('find') || lowerStep.includes('look up')) {
-
+  // --- SEARCH: Current events, facts, recent info ---
+  else if (toolDecision === 'search') {
     const query = step
-      .replace(/search|browse|google|research|find|look up|for|the|web|internet/gi, '')
+      .replace(/search|find|look up|research|google|for|the|web|internet/gi, '')
       .trim();
 
     if (query && import.meta.env.VITE_TAVILY_API_KEY) {
       try {
-        console.log(`[Agent Tavily] Searching for: "${query}"`);
-
+        console.log(`[Agent] Using Tavily to search: "${query}"`);
         const response = await searchTavily(query);
 
         if (response.results && response.results.length > 0) {
-          searchResults = response.results
+          let results = response.results
             .map((r: any, i: number) =>
               `[${i + 1}] ${r.title}\n${r.content}\nSource: ${r.url}`
             )
             .join('\n\n');
 
           if (response.answer) {
-            searchResults = `Summary: ${response.answer}\n\n--- Detailed Results ---\n${searchResults}`;
+            results = `Summary: ${response.answer}\n\n--- Sources ---\n${results}`;
           }
 
           console.log(`[Tavily] Found ${response.results.length} results`);
+          return results;
         }
       } catch (e) {
-        console.error('Tavily search failed:', e);
-        searchResults = "Search temporarily unavailable. Using internal knowledge.";
-      }
-    } else {
-      console.log('[Agent] No Tavily API key or empty query, using internal knowledge');
-    }
-  }
-  // -----------------------------
 
-  try {
-    const promptContext = searchResults
-      ? `I have successfully searched the web using Tavily. Here is the ACTUAL information I found:\n\n${searchResults.substring(0, 8000)}\n\n`
-      : `I am executing this step based on my internal knowledge.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: `You are an autonomous agent executing a step in a task. 
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: `You are an autonomous agent executing a step in a task. 
       Current Step: ${step}
       Context from previous steps: ${context}
       
@@ -245,28 +229,28 @@ export const executeStep = async (step: string, context: string): Promise<string
       
       Based on the above (especially the search results if provided), provide a concise, factual summary (2-3 sentences) of what you found or achieved. 
       If you found specific data, quote it. Do not hallucinate. Cite sources when available.`,
-    });
-    return response.text || "Step completed.";
-  } catch (error) {
-    return "Completed step.";
-  }
-};
+        });
+        return response.text || "Step completed.";
+      } catch (error) {
+        return "Completed step.";
+      }
+    };
 
-// 6. Final Report
-export const generateFinalReport = async (originalPrompt: string, stepSummaries: string[]): Promise<string> => {
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Generate a comprehensive final response for the user based on the executed steps.
+    // 6. Final Report
+    export const generateFinalReport = async (originalPrompt: string, stepSummaries: string[]): Promise<string> => {
+      try {
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: `Generate a comprehensive final response for the user based on the executed steps.
       Original Request: "${originalPrompt}"
       
       Execution Log:
       ${stepSummaries.map((s, i) => `${i + 1}. ${s}`).join('\n')}
       
       Format with clear headings and bullet points. Keep it professional and concise.`,
-    });
-    return response.text || "Task completed.";
-  } catch (error) {
-    return "Here is the result of your request based on the steps taken.";
-  }
-};
+        });
+        return response.text || "Task completed.";
+      } catch (error) {
+        return "Here is the result of your request based on the steps taken.";
+      }
+    };
