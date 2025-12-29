@@ -10,6 +10,8 @@ import { Plus, ArrowUp, FileText, Download, Check, Square, Mic } from 'lucide-re
 import { detectFileOperation, getFileOperationAck } from './utils/fileOperationDetector';
 import { generatePlan, executeStep, generateFinalReport, analyzeIntent, generateChatResponse, generateStepLogs } from './services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { HistorySidebar } from './components/HistorySidebar';
+import { ChatHistory } from './types';
 import manusLogo from './assets/manus logo.png';
 import { Thinking } from './components/Thinking';
 
