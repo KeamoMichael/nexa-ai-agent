@@ -278,6 +278,7 @@ export default function App() {
       content: finalContent,
       type: 'file',
       modelTag: currentModel.tag,
+      isZip: requestedFile?.endsWith('.zip') || false,
       fileData: {
         name: fileName,
         type: fileType,
@@ -355,17 +356,37 @@ export default function App() {
                         <div
                           className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group shadow-sm"
                           onClick={() => {
-                            // Create downloadable blob
-                            const blob = new Blob([msg.content], { type: 'text/plain' });
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = msg.fileData.name;
-                            a.click();
-                            URL.revokeObjectURL(url);
+                            if (msg.isZip) {
+                              // Handle binary ZIP - convert base64 to blob
+                              try {
+                                const binary = atob(msg.content);
+                                const bytes = new Uint8Array(binary.length);
+                                for (let i = 0; i < binary.length; i++) {
+                                  bytes[i] = binary.charCodeAt(i);
+                                }
+                                const blob = new Blob([bytes], { type: 'application/zip' });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = msg.fileData!.name;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                              } catch (e) {
+                                console.error('ZIP download error:', e);
+                                alert('Error downloading ZIP file');
+                              }
+                            } else {
+                              // Handle regular text file
+                              const blob = new Blob([msg.content], { type: 'text/plain' });
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = msg.fileData!.name;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }
                           }}
-                        >
-                          <div className="flex items-center gap-4">
+                        >                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
                               <FileText className="text-white" size={20} />
                             </div>

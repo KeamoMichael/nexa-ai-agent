@@ -1,8 +1,14 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { PlanStep } from "../types";
-import { io, Socket } from "socket.io-client";
+import { GoogleGenerativeAI, Type } from '@google/genai';
+import { PlanStep } from "../types"; // Keep existing import
+import { io, Socket } from 'socket.io-client'; // Re-add Socket type
+import JSZip from 'jszip';
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+// Initialize Gemini API
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+if (!apiKey) {
+  throw new Error('Missing VITE_GEMINI_API_KEY');
+}
+const ai = new GoogleGenerativeAI(apiKey); // Initialize with new class and key
 
 // Socket.IO connection for E2B browser control
 const SOCKET_URL = import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin;
@@ -306,7 +312,48 @@ export const generateFinalReport = async (originalPrompt: string, stepSummaries:
     const fileMatch = originalPrompt.match(/create.*?([a-zA-Z0-9_-]+\.(py|js|html|css|json|txt|md|tsx|ts|jsx|zip))/i);
     const requestedFile = fileMatch ? fileMatch[1] : null;
 
-    if (requestedFile) {
+    if (requestedFile && requestedFile.endsWith('.zip')) {
+      // Generate ZIP archive with multiple files!
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: `User requested: "${originalPrompt}"
+
+Generate a complete project with multiple files for ${requestedFile}.
+Return as a JSON object with this EXACT format:
+{
+  "files": [
+    {"name": "main_script.py", "content": "actual Python code here"},
+    {"name": "requirements.txt", "content": "dependencies list"},
+    {"name": "README.md", "content": "setup instructions and usage"}
+  ]
+}
+
+Create ALL necessary files for a complete, working project.
+Include proper code, dependencies, and documentation.
+Return ONLY the JSON, no markdown formatting.`
+      });
+
+      try {
+        const filesData = JSON.parse(response.text);
+        const zip = new JSZip();
+
+        // Add all files to ZIP
+        if (filesData.files && Array.isArray(filesData.files)) {
+          filesData.files.forEach((file: { name: string, content: string }) => {
+            zip.file(file.name, file.content);
+          });
+
+          // Generate compressed ZIP as base64
+          const zipBlob = await zip.generateAsync({ type: 'base64' });
+          return zipBlob; // Return base64 ZIP data
+        } else {
+          return '# Error: Invalid file structure';
+        }
+      } catch (parseError) {
+        console.error('ZIP generation error:', parseError);
+        return '# Error creating ZIP archive';
+      }
+    } else if (requestedFile) {
       // Generate ONLY the file code content - NO MARKDOWN!
       const response = await ai.models.generateContent({
         model: 'gemini-2.0-flash',

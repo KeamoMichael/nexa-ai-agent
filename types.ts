@@ -7,6 +7,7 @@ export interface Message {
   planId?: string;
   fileData?: FileArtifact;
   modelTag?: string;
+  isZip?: boolean; // Flag for binary ZIP files
 }
 
 export interface FileArtifact {
