@@ -155,18 +155,26 @@ export default function App() {
 
     // --- CASE B: Complex Task (Agentic Mode) ---
 
-    // 1. Generate intelligent initial response (not hardcoded!)
-    if (isStoppedRef.current) { handleTermination(); return; }
-    const initialResponseText = await generateChatResponse(`Acknowledge the user's request: "${userText}". Be brief and natural, 1-2 sentences max.`);
+    // Generate initial response (skip for file creation - we'll respond at the end with deliverable)
+    const fileMatch = userText.match(/(?:create|deliverable|named|file|save|package).*?([a-zA-Z0-9_-]+\.(py|js|html|css|json|txt|md|tsx|ts|jsx|zip))/i);
+    const isFileRequest = fileMatch !== null;
 
-    const initialResponseMsg: Message = {
+    let initialResponseContent = '';
+    if (!isFileRequest) {
+      // Only generate detailed response for non-file requests
+      initialResponseContent = await generateDynamicResponse(userText);
+    } else {
+      // For file requests, just acknowledge and proceed to execution
+      initialResponseContent = `I'll create ${fileMatch[1]} for you.`;
+    }
+
+    setMessages(prev => [...prev, {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
-      content: initialResponseText,
+      content: initialResponseContent,
       type: 'text',
       modelTag: currentModel.tag
-    };
-    setMessages(prev => [...prev, initialResponseMsg]);
+    }]);
 
     // 2. Generate Plan
     if (isStoppedRef.current) { handleTermination(); return; }
@@ -233,8 +241,13 @@ export default function App() {
     if (isStoppedRef.current) { handleTermination(); return; }
 
     // Check if user requested a specific file creation
-    const fileMatch = userText.match(/create.*?([a-zA-Z0-9_-]+\.(py|js|html|css|json|txt|md|tsx|ts|jsx|zip))/i);
+    // Enhanced regex to catch: "create X.zip", "deliverable > X.zip", "named X.zip", etc.
+    const fileMatch = userText.match(/(?:create|deliverable|named|file|save|package).*?([a-zA-Z0-9_-]+\.(py|js|html|css|json|txt|md|tsx|ts|jsx|zip))/i);
     const requestedFile = fileMatch ? fileMatch[1] : null;
+
+    console.log('[File Detection] User text:', userText);
+    console.log('[File Detection] Regex match:', fileMatch);
+    console.log('[File Detection] Requested file:', requestedFile);
 
     let finalContent = '';
     let fileName = '';

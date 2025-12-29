@@ -308,9 +308,12 @@ const classifyStepTool = async (step: string): Promise<'browser' | 'search' | 'k
 // 7. Final Report Generation
 export const generateFinalReport = async (originalPrompt: string, stepSummaries: string[]): Promise<string> => {
   try {
-    // Check if user requested a specific file
-    const fileMatch = originalPrompt.match(/create.*?([a-zA-Z0-9_-]+\.(py|js|html|css|json|txt|md|tsx|ts|jsx|zip))/i);
+    // Check if user requested a specific file (must match App.tsx regex!)
+    const fileMatch = originalPrompt.match(/(?:create|deliverable|named|file|save|package).*?([a-zA-Z0-9_-]+\.(py|js|html|css|json|txt|md|tsx|ts|jsx|zip))/i);
     const requestedFile = fileMatch ? fileMatch[1] : null;
+
+    console.log('[Final Report] Prompt:', originalPrompt);
+    console.log('[Final Report] Detected file:', requestedFile);
 
     if (requestedFile && requestedFile.endsWith('.zip')) {
       // Generate ZIP archive with multiple files!
