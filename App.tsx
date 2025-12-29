@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { TopBar } from './components/TopBar';
-import { CreditSheet } from './components/CreditSheet';
+
 import { PlannerWidget } from './components/PlannerWidget';
 import { InlinePlanWidget } from './components/InlinePlanWidget';
 import { LoginModal } from './components/LoginModal';
@@ -340,14 +340,27 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen bg-[#F9F9F9] text-gray-900 font-sans relative overflow-hidden">
+      <HistorySidebar
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        chats={chats}
+        activeChat={activeChatId}
+        onSelectChat={switchChat}
+        onRenameChat={renameChat}
+        onDeleteChat={deleteChat}
+        onShareChat={shareChat}
+      />
+
       <TopBar
         currentModel={currentModel}
         setCurrentModel={setCurrentModel}
-        credits={credits}
-        openCredits={() => setIsCreditSheetOpen(true)}
+        onToggleHistory={() => setHistoryOpen(!historyOpen)}
+        chatId={activeChatId}
+        chatTitle={getCurrentChatTitle()}
+        onRenameChat={(newTitle) => renameChat(activeChatId, newTitle)}
+        onDeleteChat={() => deleteChat(activeChatId)}
+        onShareChat={() => shareChat(activeChatId)}
       />
-
-      <CreditSheet isOpen={isCreditSheetOpen} onClose={() => setIsCreditSheetOpen(false)} credits={credits} />
       <LoginModal isOpen={isLoginRequired} onLogin={handleLogin} />
 
       {/* Main Content Area */}
