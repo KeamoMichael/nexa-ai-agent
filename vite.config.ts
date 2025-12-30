@@ -3,10 +3,7 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-
-  server: {
-    port: 3000,
-    host: '0.0.0.0',
-  }
+  base: './',
+  root: '//mac/Home/Documents/Web Development/ANDROID APPS/MANUS CLONE/manus-ai-clone',
 })
 
