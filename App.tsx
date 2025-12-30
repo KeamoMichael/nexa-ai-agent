@@ -62,6 +62,7 @@ export default function App() {
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
   const [currentModel, setCurrentModel] = useState<Model>(AVAILABLE_MODELS[0]);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auth & Session State
@@ -111,17 +112,16 @@ export default function App() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isStoppedRef = useRef(false);
 
-  // Handle file selection
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
+  // Process files (shared between input and drag/drop)
+  const processFiles = (fileList: FileList | null) => {
+    if (!fileList) return;
 
     const newFiles: AttachedFile[] = [];
     const maxFiles = 10;
     const currentCount = attachedFiles.length;
 
-    for (let i = 0; i < files.length && currentCount + newFiles.length < maxFiles; i++) {
-      const file = files[i];
+    for (let i = 0; i < fileList.length && currentCount + newFiles.length < maxFiles; i++) {
+      const file = fileList[i];
       const fileType = getFileType(file);
       const attachedFile: AttachedFile = {
         id: Date.now().toString() + i,
@@ -138,7 +138,42 @@ export default function App() {
     }
 
     setAttachedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  // Handle file selection from input
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    processFiles(e.target.files);
     e.target.value = ''; // Reset input
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set false if leaving the main container
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    processFiles(e.dataTransfer.files);
   };
 
   // Remove attached file
@@ -598,7 +633,27 @@ export default function App() {
 
       <motion.div
         className="flex-1 flex flex-col min-w-0 relative"
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
+        {/* Drop Zone Overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+              <p className="text-lg font-medium text-gray-700 dark:text-gray-300">Drop any files here</p>
+              <p className="text-sm text-gray-500">Maximum 10 files</p>
+            </div>
+          </div>
+        )}
 
         <TopBar
           currentModel={currentModel}
@@ -800,7 +855,7 @@ export default function App() {
                         {/* Remove button */}
                         <button
                           onClick={() => removeAttachment(attachedFile.id)}
-                          className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-700 dark:bg-gray-600 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-800"
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-gray-700 dark:bg-gray-600 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-800 shadow-md"
                         >
                           <X size={12} />
                         </button>
