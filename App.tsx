@@ -748,7 +748,7 @@ export default function App() {
           {/* Main Content Area */}
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto pt-20 pb-40 px-4 scroll-smooth"
+            className="flex-1 overflow-y-auto pt-24 pb-40 px-4 scroll-smooth"
           >
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center -mt-20">
