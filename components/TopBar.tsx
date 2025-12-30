@@ -31,7 +31,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 bg-[#F9F9F9]/90 dark:bg-gray-900/90 backdrop-blur-sm">
+    <div
+      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+      className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-[#F9F9F9]/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800"
+    >
       <div className="flex items-center gap-3">
         {/* History Toggle - Mobile Only */}
         <button

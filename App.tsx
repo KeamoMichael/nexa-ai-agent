@@ -917,8 +917,8 @@ export default function App() {
 
           <PlannerWidget plan={currentPlan} />
 
-          {/* Bottom Input Bar - Minimal Multi-line Redesign with Ultra Tightened Spacing */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 pb-[env(safe-area-inset-bottom,1rem)] bg-gradient-to-t from-[#F9F9F9] via-[#F9F9F9] to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pt-10 z-40">
+          {/* Bottom Input Bar - Tightened for Mobile Edge-to-Edge */}
+          <div className="absolute bottom-0 left-0 right-0 px-4 pb-[env(safe-area-inset-bottom,0.75rem)] bg-gradient-to-t from-[#F9F9F9] via-[#F9F9F9] to-transparent dark:from-gray-900 dark:via-gray-900 dark:to-transparent pt-6 z-40">
             <div className="max-w-2xl mx-auto">
               {/* Hidden file input */}
               <input

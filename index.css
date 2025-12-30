@@ -63,6 +63,6 @@ body {
 
 /* Apply safe area padding to fixed bottom elements */
 .fixed.bottom-0,
-[class*="bottom-"] {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem) !important;
+[class*="bottom-0"] {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
