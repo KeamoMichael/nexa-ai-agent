@@ -32,8 +32,8 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <div
-      style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
-      className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-[#F9F9F9]/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 0.75rem)' }}
+      className="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 pb-3 bg-[#F9F9F9]/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800"
     >
       <div className="flex items-center gap-3">
         {/* History Toggle - Mobile Only */}
