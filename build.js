@@ -7,21 +7,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 try {
+    process.chdir(__dirname);
     await build({
         configFile: false,
-        plugins: [react()],
-        base: './',
         root: __dirname,
-        resolve: {
-            dedupe: ['react', 'react-dom'],
-        },
+        base: './',
+        plugins: [react()],
         build: {
             outDir: resolve(__dirname, 'dist'),
             assetsDir: 'assets',
             emptyOutDir: true,
-            commonjsOptions: {
-                include: [/node_modules/],
-            },
+            rollupOptions: {
+                input: resolve(__dirname, 'index.html'),
+            }
         }
     });
     console.log('Build successful!');
