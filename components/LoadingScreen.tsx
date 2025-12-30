@@ -45,46 +45,10 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ isLoading }) => {
                             position: 'relative',
                         }}
                     >
-                        {/* Glow effect behind logo */}
-                        <motion.div
-                            animate={{
-                                scale: [1, 1.2, 1],
-                                opacity: [0.3, 0.6, 0.3],
-                            }}
-                            transition={{
-                                duration: 2,
-                                repeat: Infinity,
-                                ease: 'easeInOut',
-                            }}
-                            style={{
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                width: '200px',
-                                height: '200px',
-                                background: 'radial-gradient(circle, rgba(0,0,0,0.1) 0%, transparent 70%)',
-                                borderRadius: '50%',
-                                zIndex: -1,
-                            }}
-                        />
-
-                        {/* Logo image with pulse animation */}
-                        <motion.img
+                        {/* Logo image */}
+                        <img
                             src={nexaLogo}
                             alt="Nexa AI"
-                            animate={{
-                                filter: [
-                                    'drop-shadow(0 0 8px rgba(0,0,0,0.2))',
-                                    'drop-shadow(0 0 20px rgba(0,0,0,0.3))',
-                                    'drop-shadow(0 0 8px rgba(0,0,0,0.2))',
-                                ],
-                            }}
-                            transition={{
-                                duration: 2,
-                                repeat: Infinity,
-                                ease: 'easeInOut',
-                            }}
                             style={{
                                 width: '120px',
                                 height: '120px',
