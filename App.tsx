@@ -197,6 +197,21 @@ export default function App() {
     }
   };
 
+  // Convert file to base64 for API
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data URL prefix (e.g., "data:image/png;base64,")
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
   // Auto-scroll for message container
   useEffect(() => {
     if (scrollRef.current) {
@@ -426,13 +441,27 @@ export default function App() {
       setMessages(prev => [...prev, assistantMsg]);
       setAgentState(AgentState.IDLE);
 
+      // Convert attached images to base64 for API
+      const imageAttachments = await Promise.all(
+        attachedFiles
+          .filter(f => f.type === 'image')
+          .map(async (f) => ({
+            base64: await fileToBase64(f.file),
+            mimeType: f.file.type,
+            name: f.file.name
+          }))
+      );
+
+      // Clear attachments after capturing for send
+      setAttachedFiles([]);
+
       // Stream response and update message content progressively
       await generateChatResponseStream(userText, (streamedText) => {
         if (isStoppedRef.current) return;
         setMessages(prev => prev.map(msg =>
           msg.id === msgId ? { ...msg, content: streamedText } : msg
         ));
-      });
+      }, imageAttachments.length > 0 ? imageAttachments : undefined);
 
       return;
     }

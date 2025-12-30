@@ -155,10 +155,18 @@ export const generateChatResponse = async (prompt: string): Promise<string> => {
   }
 };
 
-// 2b. Streaming Chat Response with Assistant Persona
+// File attachment type for API
+interface FileAttachment {
+  base64: string;
+  mimeType: string;
+  name: string;
+}
+
+// 2b. Streaming Chat Response with Assistant Persona (supports multimodal with images)
 export const generateChatResponseStream = async (
   prompt: string,
-  onChunk: (text: string) => void
+  onChunk: (text: string) => void,
+  attachments?: FileAttachment[]
 ): Promise<string> => {
   try {
     const systemPrompt = `You are Nexa, a thoughtful AI assistant that helps users accomplish their goals. 
@@ -173,6 +181,8 @@ KEY BEHAVIORS:
 
 4. **For clear, specific requests**: Execute directly without unnecessary questions. Only ask when genuinely helpful.
 
+5. **When images or files are provided**: Analyze them thoroughly and describe what you see. Be detailed and helpful.
+
 EXAMPLES OF WHEN TO ASK:
 - "create a python script" → Ask: What should it do? (examples: hello world, calculator, file processor)
 - "write me an essay" → Ask: What topic? What length? What style/audience?
@@ -182,15 +192,36 @@ EXAMPLES OF WHEN TO JUST EXECUTE:
 - "write a function that calculates fibonacci numbers in Python" → Clear enough, execute directly
 - "explain how HTTP works" → Direct question, answer it
 - "hello" / "hi" → Just greet warmly
+- "what do you see?" (with image attached) → Describe the image in detail
 
 Always be warm, helpful, and conversational. Format responses with markdown (bold, bullets, numbered lists) for readability.`;
+
+    // Build user content parts (text + any attached images)
+    const userParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
+
+    // Add attached images first
+    if (attachments && attachments.length > 0) {
+      for (const attachment of attachments) {
+        if (attachment.mimeType.startsWith('image/')) {
+          userParts.push({
+            inlineData: {
+              mimeType: attachment.mimeType,
+              data: attachment.base64
+            }
+          });
+        }
+      }
+    }
+
+    // Add text prompt
+    userParts.push({ text: prompt });
 
     const response = await ai.models.generateContentStream({
       model: 'gemini-2.0-flash',
       contents: [
         { role: 'user', parts: [{ text: systemPrompt }] },
-        { role: 'model', parts: [{ text: 'Understood! I will behave as a thoughtful assistant, asking clarifying questions when requests are vague and offering concrete examples to help users articulate their needs.' }] },
-        { role: 'user', parts: [{ text: prompt }] }
+        { role: 'model', parts: [{ text: 'Understood! I will behave as a thoughtful assistant, asking clarifying questions when requests are vague and offering concrete examples to help users articulate their needs. When images are provided, I will analyze and describe them in detail.' }] },
+        { role: 'user', parts: userParts }
       ],
     });
 
